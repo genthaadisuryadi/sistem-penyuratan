@@ -84,6 +84,9 @@ class SuratController extends Controller
         // Letak QR ditetapkan otomatis: kanan bawah pada halaman terakhir.
         $data['qr_posisi'] = PosisiQr::KananBawah->value;
         $data['qr_halaman'] = HalamanQr::Terakhir->value;
+        
+        // REVISI: Status surat selalu berstatus draf di awal
+        $data['status'] = StatusSurat::Draf->value;
 
         // Role Unit tidak pernah dapat memalsukan identitas penandatangan melalui request.
         if ($user->role === RoleAdmin::Unit) {
@@ -105,9 +108,7 @@ class SuratController extends Controller
             return back()->withInput()->withErrors(['berkas' => 'Terjadi kesalahan saat memproses PDF. Data tidak disimpan, silakan coba lagi.']);
         }
 
-        return redirect()->route('admin.surat.show', $surat)->with('status', $surat->status === StatusSurat::Publish
-            ? 'Surat berhasil dipublikasikan.'
-            : 'Surat berhasil disimpan sebagai draf.');
+        return redirect()->route('admin.surat.show', $surat)->with('status', 'Surat berhasil disimpan sebagai draf.');
     }
 
     public function show(Surat $surat, QrCodeService $qr): View

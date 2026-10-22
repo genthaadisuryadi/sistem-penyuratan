@@ -6,7 +6,8 @@
     $judulStatus = $sah ? 'Dokumen terverifikasi' : ($draf ? 'Surat belum dipublikasikan' : 'Surat ditarik');
 @endphp
 <x-layouts.publik :title="$judulStatus">
-    <header @class(['px-5 pb-28 pt-6 text-white', 'panel-valid' => $sah, 'panel-unknown' => $draf, 'panel-revoked' => $ditarik])>
+    {{-- REVISI: Mengubah warna background header menjadi biru (bg-blue-600) jika status surat SAH/Terpublikasi --}}
+    <header @class(['px-5 pb-28 pt-6 text-white', 'bg-blue-600' => $sah, 'panel-unknown' => $draf, 'panel-revoked' => $ditarik])>
         <div class="mx-auto flex max-w-xl items-center gap-3">
             <x-logo variant="navbar" class="size-10 shrink-0 rounded-xl bg-white/90 p-0.5"/>
             <p class="text-sm font-semibold leading-tight">{{ $instansi }}</p>
@@ -41,14 +42,12 @@
             </dl>
         </section>
 
-        <section class="flex items-center gap-4 rounded-2xl border border-line bg-white p-5 sm:p-6" aria-labelledby="judul-letak">
-            <x-letak-qr :posisi="$surat->qr_posisi" class="w-24 shrink-0 drop-shadow-sm"/>
-            <div><h2 id="judul-letak" class="text-base font-semibold">Letak QR Code di surat</h2><p class="mt-1 text-sm leading-relaxed text-ink-soft">Pada surat asli, QR Code berada di {{ $surat->qr_posisi->frasa() }}, {{ strtolower($surat->qr_halaman->label()) }}. Kode verifikasi: <strong class="whitespace-nowrap tracking-widest text-ink">{{ $surat->kodeTampil() }}</strong>.</p></div>
-        </section>
+        {{-- REVISI: Blok informasi Letak QR Code dan Kode Verifikasi dihapus dari sini --}}
 
         @if ($sah)
             <div class="sticky bottom-0 z-10 -mx-4 bg-gradient-to-t from-paper via-paper/95 to-transparent px-4 pb-4 pt-6" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
-                <a href="{{ route('verifikasi.unduh', $surat->uuid) }}" class="btn-primary btn-lg w-full shadow-lg shadow-orange-900/20"><x-icon name="unduh" class="size-5"/>Unduh Dokumen Resmi (PDF)</a>
+                {{-- REVISI: Menyesuaikan styling tombol unduh agar selaras dengan tema biru (!bg-blue-600) --}}
+                <a href="{{ route('verifikasi.unduh', $surat->uuid) }}" class="btn-primary !bg-blue-600 !border-blue-600 hover:!bg-blue-700 btn-lg w-full shadow-lg shadow-blue-900/20"><x-icon name="unduh" class="size-5"/>Unduh Dokumen Resmi (PDF)</a>
                 <p class="mt-2 text-center text-xs text-ink-soft">{{ number_format($surat->file_size / 1024, 0, ',', '.') }} KB. Sidik jari berkas ada di bawah.</p>
             </div>
         @else

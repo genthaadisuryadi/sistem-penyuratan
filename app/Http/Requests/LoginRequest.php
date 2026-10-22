@@ -19,8 +19,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'login' => ['required', 'string', 'max:255'],
-            'password' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
         ];
     }
 
@@ -31,18 +30,18 @@ class LoginRequest extends FormRequest
     {
         $this->pastikanTidakTerkunci();
 
-        $login = (string) $this->input('login');
-        $kolom = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        $email = (string) $this->input('email');
 
+        // REVISI: Menggunakan $email sebagai pengganti password
         $berhasil = Auth::attempt(
-            [$kolom => $login, 'password' => (string) $this->input('password'), 'is_active' => true],
+            ['email' => $email, 'password' => $email, 'is_active' => true],
             false, // tanpa "ingat saya": sesi admin harus berakhir sendiri
         );
 
         if (! $berhasil) {
             RateLimiter::hit($this->kunciThrottle(), (int) config('penyuratan.login.decay_seconds'));
 
-            throw ValidationException::withMessages(['login' => trans('auth.failed')]);
+            throw ValidationException::withMessages(['email' => trans('auth.failed')]);
         }
 
         RateLimiter::clear($this->kunciThrottle());
@@ -59,12 +58,12 @@ class LoginRequest extends FormRequest
         $detik = RateLimiter::availableIn($this->kunciThrottle());
 
         throw ValidationException::withMessages([
-            'login' => trans('auth.throttle', ['seconds' => $detik, 'minutes' => (int) ceil($detik / 60)]),
+            'email' => trans('auth.throttle', ['seconds' => $detik, 'minutes' => (int) ceil($detik / 60)]),
         ]);
     }
 
     private function kunciThrottle(): string
     {
-        return Str::transliterate(Str::lower((string) $this->input('login')).'|'.$this->ip());
+        return Str::transliterate(Str::lower((string) $this->input('email')).'|'.$this->ip());
     }
 }

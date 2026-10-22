@@ -21,8 +21,8 @@
 
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col bg-pine-900 text-pine-100 shadow-xl transition-transform duration-200 lg:translate-x-0 lg:shadow-none" aria-label="Navigasi utama">
         <div class="px-4 pb-2 pt-5">
-            <x-logo-mitra variant="sidebar"/>
-            <p class="mt-3 text-center text-xs font-medium tracking-wide text-pine-300">Sistem Penyuratan</p>
+            {{-- REVISI: <x-logo-mitra variant="sidebar"/> dihapus dari sini --}}
+            <p class="mt-3 text-center text-sm font-semibold tracking-wide text-pine-100">Sistem Penyuratan</p>
         </div>
 
         <nav class="mt-2 flex-1 space-y-1 px-3">

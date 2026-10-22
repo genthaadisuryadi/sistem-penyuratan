@@ -9,7 +9,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class PenggunaController extends Controller
@@ -36,10 +35,18 @@ class PenggunaController extends Controller
     public function store(Request $request): RedirectResponse
     {
         abort_unless(auth()->user()->dapatKelolaPengguna(), 403);
+        
         $data = $this->validasi($request, null);
+        
+        // REVISI: Password default sama dengan email
+        $data['password'] = $data['email']; 
+        
+        // REVISI: Dummy username untuk mencegah error DB jika kolom masih Not Null
+        $data['username'] = Str::slug(explode('@', $data['email'])[0]) . '_' . Str::random(5); 
+
         User::create($data + ['is_active' => true]);
 
-        return redirect()->route('admin.pengguna.index')->with('status', 'Pengguna berhasil ditambahkan.');
+        return redirect()->route('admin.pengguna.index')->with('status', 'Pengguna berhasil ditambahkan dengan password default (email).');
     }
 
     public function edit(User $pengguna): View
@@ -54,6 +61,7 @@ class PenggunaController extends Controller
     {
         abort_unless(auth()->user()->dapatKelolaPengguna(), 403);
         abort_if(! auth()->user()->isSuperadmin() && $pengguna->role === RoleAdmin::Superadmin, 403);
+        
         $data = $this->validasi($request, $pengguna);
         $data['is_active'] = $request->boolean('is_active');
 
@@ -71,13 +79,10 @@ class PenggunaController extends Controller
         abort_unless(auth()->user()->dapatKelolaPengguna(), 403);
         abort_if(! auth()->user()->isSuperadmin() && $pengguna->role === RoleAdmin::Superadmin, 403);
 
-        $kataSandi = Str::password(16, symbols: false);
-        $pengguna->update(['password' => $kataSandi]);
+        // REVISI: Reset password dikembalikan ke default yaitu email pengguna
+        $pengguna->update(['password' => $pengguna->email]);
 
-        return redirect()->route('admin.pengguna.index')->with('kata_sandi_baru', [
-            'nama' => $pengguna->name,
-            'password' => $kataSandi,
-        ]);
+        return redirect()->route('admin.pengguna.index')->with('status', "Kata sandi untuk {$pengguna->name} berhasil direset kembali ke email default.");
     }
 
     public function destroy(User $pengguna): RedirectResponse
@@ -104,26 +109,13 @@ class PenggunaController extends Controller
             ? Rule::enum(RoleAdmin::class)
             : Rule::in([RoleAdmin::Sekretariat->value, RoleAdmin::Unit->value]);
 
-        $rules = [
+        // REVISI: Menghapus validasi username dan password
+        return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'jabatan' => ['required', 'string', 'max:150'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($pengguna)],
-            'username' => ['required', 'alpha_dash', 'max:50', Rule::unique('users', 'username')->ignore($pengguna)],
             'role' => ['required', $rulesRole],
-        ];
-
-        if (! $pengguna) {
-            $rules['password'] = ['required', 'confirmed', Password::defaults()];
-        } else {
-            $rules['password'] = ['nullable', 'confirmed', Password::defaults()];
-        }
-
-        $data = $request->validate($rules);
-        if (empty($data['password'])) {
-            unset($data['password']);
-        }
-
-        return $data;
+        ]);
     }
 
     private function rolesTersedia(): array

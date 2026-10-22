@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\RoleAdmin;
-use App\Enums\StatusSurat;
 use App\Models\Surat;
 use App\Rules\BerkasPdf;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,7 +28,7 @@ class StoreSuratRequest extends FormRequest
             'penandatangan_id' => ['nullable', 'prohibited'],
             'penandatangan_nama' => $unit ? ['nullable', 'prohibited'] : ['required', 'string', 'max:150'],
             'penandatangan_jabatan' => $unit ? ['nullable', 'prohibited'] : ['required', 'string', 'max:150'],
-            'status' => ['required', Rule::in([StatusSurat::Draf->value, StatusSurat::Publish->value])],
+            // REVISI: 'status' dihapus dari rule karena selalu di set default 'draf' di controller
             'berkas' => [
                 'required', 'file',
                 'mimetypes:application/pdf',
