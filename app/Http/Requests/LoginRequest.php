@@ -38,13 +38,16 @@ class LoginRequest extends FormRequest
                 'password' => (string) $this->input('password'), 
                 'is_active' => true
             ],
-            false, // tanpa "ingat saya": sesi admin harus berakhir sendiri
+            false,
         );
 
         if (! $berhasil) {
             RateLimiter::hit($this->kunciThrottle(), (int) config('penyuratan.login.decay_seconds'));
 
-            throw ValidationException::withMessages(['email' => trans('auth.failed')]);
+            // PERBAIKAN: Mengganti pesan error kustom tanpa kata "username"
+            throw ValidationException::withMessages([
+                'email' => 'Email atau kata sandi tidak sesuai.'
+            ]);
         }
 
         RateLimiter::clear($this->kunciThrottle());

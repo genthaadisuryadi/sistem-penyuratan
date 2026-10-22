@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -38,10 +39,10 @@ class PenggunaController extends Controller
         
         $data = $this->validasi($request, null);
         
-        // REVISI: Password default sama dengan email
-        $data['password'] = $data['email']; 
+        // PERBAIKAN: Enkripsi password menggunakan Hash::make()
+        $data['password'] = Hash::make($data['email']); 
         
-        // REVISI: Dummy username untuk mencegah error DB jika kolom masih Not Null
+        // Dummy username untuk mencegah error DB jika kolom masih Not Null
         $data['username'] = Str::slug(explode('@', $data['email'])[0]) . '_' . Str::random(5); 
 
         User::create($data + ['is_active' => true]);
@@ -79,8 +80,8 @@ class PenggunaController extends Controller
         abort_unless(auth()->user()->dapatKelolaPengguna(), 403);
         abort_if(! auth()->user()->isSuperadmin() && $pengguna->role === RoleAdmin::Superadmin, 403);
 
-        // REVISI: Reset password dikembalikan ke default yaitu email pengguna
-        $pengguna->update(['password' => $pengguna->email]);
+        // PERBAIKAN: Enkripsi saat reset password dikembalikan ke email
+        $pengguna->update(['password' => Hash::make($pengguna->email)]);
 
         return redirect()->route('admin.pengguna.index')->with('status', "Kata sandi untuk {$pengguna->name} berhasil direset kembali ke email default.");
     }
@@ -109,7 +110,6 @@ class PenggunaController extends Controller
             ? Rule::enum(RoleAdmin::class)
             : Rule::in([RoleAdmin::Sekretariat->value, RoleAdmin::Unit->value]);
 
-        // REVISI: Menghapus validasi username dan password
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'jabatan' => ['required', 'string', 'max:150'],
