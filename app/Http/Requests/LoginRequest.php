@@ -20,6 +20,7 @@ class LoginRequest extends FormRequest
     {
         return [
             'email' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
         ];
     }
 
@@ -30,11 +31,13 @@ class LoginRequest extends FormRequest
     {
         $this->pastikanTidakTerkunci();
 
-        $email = (string) $this->input('email');
-
-        // REVISI: Menggunakan $email sebagai pengganti password
+        // Autentikasi ketat menggunakan email dan password dari input form
         $berhasil = Auth::attempt(
-            ['email' => $email, 'password' => $email, 'is_active' => true],
+            [
+                'email' => (string) $this->input('email'), 
+                'password' => (string) $this->input('password'), 
+                'is_active' => true
+            ],
             false, // tanpa "ingat saya": sesi admin harus berakhir sendiri
         );
 
