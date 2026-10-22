@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 76" role="img" aria-label="Logo Sistem Penyuratan">
+  <rect x="2" y="6" width="64" height="64" rx="16" fill="#e7553c"/>
+  <path d="M21 18h19l10 10v29H21z" fill="#fff"/>
+  <path d="M40 18v11h10" fill="#ffd4ca"/>
+  <path d="M27 37h17M27 44h17M27 51h10" fill="none" stroke="#e7553c" stroke-width="3" stroke-linecap="round"/>
+  <text x="82" y="34" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#2b1c18">SISTEM PENYURATAN</text>
+  <text x="82" y="55" font-family="Arial, sans-serif" font-size="12" fill="#79615a">Verifikasi dokumen resmi</text>
+</svg>

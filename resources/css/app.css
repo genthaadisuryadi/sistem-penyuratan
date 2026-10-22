@@ -1,0 +1,176 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/plus-jakarta-sans';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+/*
+ * Token desain
+ *  - pine    : hijau pinus gelap untuk sidebar dan teks utama (bukan hitam netral)
+ *  - paper   : latar halaman, putih kehijauan yang sejuk
+ *  - emerald : warna utama (bawaan Tailwind) untuk status sah, tombol, dan fokus
+ *  - red     : khusus status dicabut / tindakan merusak
+ */
+@theme {
+    --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+    --color-pine-50: #fff3ef;
+    --color-pine-100: #ffe5dd;
+    --color-pine-300: #c69c91;
+    --color-pine-500: #b94c38;
+    --color-pine-700: #843323;
+    --color-pine-800: #5e2c23;
+    --color-pine-900: #40231d;
+    --color-pine-950: #2a1713;
+
+    --color-paper: #fbf6f4;
+    --color-ink: #2b1c18;
+    --color-ink-soft: #79615a;
+    --color-line: #efddd7;
+    --color-emerald-50: #fff0ec;
+    --color-emerald-100: #ffe0d8;
+    --color-emerald-300: #f6aa9a;
+    --color-emerald-600: #e7553c;
+    --color-emerald-700: #c94731;
+    --color-emerald-800: #a53a28;
+    --color-emerald-900: #7f2c20;
+}
+
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        @apply bg-paper font-sans text-ink antialiased;
+        font-feature-settings: 'tnum' 1;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-emerald-600);
+        outline-offset: 2px;
+    }
+
+    dialog::backdrop {
+        background: rgb(42 23 19 / 0.55);
+        backdrop-filter: blur(2px);
+    }
+}
+
+@utility btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@layer components {
+    .btn-primary {
+        @apply btn bg-emerald-600 text-white shadow-sm hover:bg-emerald-700;
+    }
+
+    .btn-secondary {
+        @apply btn border border-line bg-white text-ink hover:bg-pine-50;
+    }
+
+    .btn-danger {
+        @apply btn bg-red-600 text-white shadow-sm hover:bg-red-700;
+    }
+
+    .btn-danger-outline {
+        @apply btn border border-red-200 bg-white text-red-700 hover:bg-red-50;
+    }
+
+    .btn-lg {
+        @apply px-6 py-4 text-base;
+    }
+
+    .label {
+        @apply mb-1.5 block text-sm font-medium text-ink;
+    }
+
+    .input {
+        @apply block w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-pine-300 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/25;
+    }
+
+    .input[aria-invalid='true'] {
+        @apply border-red-500 focus:border-red-500 focus:ring-red-500/25;
+    }
+
+    .field-error {
+        @apply mt-1.5 text-sm text-red-700;
+    }
+
+    .hint {
+        @apply mt-1.5 text-xs text-ink-soft;
+    }
+
+    .panel {
+        @apply rounded-xl border border-line bg-white;
+    }
+
+    .th {
+        @apply px-4 py-3 text-left text-xs font-semibold text-ink-soft;
+    }
+
+    .td {
+        @apply px-4 py-3.5 align-top text-sm;
+    }
+}
+
+/* Panel status halaman publik */
+.panel-valid {
+    background:
+        radial-gradient(90% 70% at 50% -10%, rgb(255 214 202 / 0.55) 0%, transparent 62%),
+        linear-gradient(180deg, #f07860 0%, #e7553c 55%, #b63a28 100%);
+}
+
+.panel-revoked {
+    background:
+        radial-gradient(90% 70% at 50% -10%, rgb(252 165 165 / 0.45) 0%, transparent 62%),
+        linear-gradient(180deg, #cbd5e1 0%, #94a3b8 55%, #64748b 100%);
+}
+
+.panel-unknown {
+    background:
+        radial-gradient(90% 70% at 50% -10%, rgb(203 213 225 / 0.4) 0%, transparent 62%),
+        linear-gradient(180deg, #64748b 0%, #475569 55%, #334155 100%);
+}
+
+/* Pola titik halus pada hero halaman publik */
+.hero-pattern::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgb(255 255 255 / 0.22) 1px, transparent 1.5px);
+    background-size: 22px 22px;
+    mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
+    pointer-events: none;
+}
+
+/* Satu-satunya gerak otomatis di situs: lencana "dicap" saat halaman terbuka. */
+@media (prefers-reduced-motion: no-preference) {
+    .seal {
+        animation: cap 620ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+        transform-origin: 50% 60%;
+    }
+
+    @keyframes cap {
+        0% {
+            opacity: 0;
+            transform: scale(1.35) rotate(-7deg);
+        }
+
+        60% {
+            opacity: 1;
+        }
+
+        100% {
+            opacity: 1;
+            transform: scale(1) rotate(0);
+        }
+    }
+}
+
+/* Dropzone unggah PDF */
+[data-dropzone].is-over {
+    @apply border-emerald-600 bg-emerald-50;
+}
