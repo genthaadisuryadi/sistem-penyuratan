@@ -5,35 +5,39 @@
 @source '../../storage/framework/views/*.php';
 
 /*
- * Token desain
- *  - pine    : hijau pinus gelap untuk sidebar dan teks utama (bukan hitam netral)
- *  - paper   : latar halaman, putih kehijauan yang sejuk
- *  - emerald : warna utama (bawaan Tailwind) untuk status sah, tombol, dan fokus
- *  - red     : khusus status dicabut / tindakan merusak
+- Token desain (Disesuaikan dengan Tema Rakit AI)
+-  - pine    : Diubah menjadi Slate/Charcoal elegan untuk teks dan elemen gelap.
+-  - paper   : Diubah menjadi putih bersih untuk kesan modern & luas.
+-  - emerald : Diubah menjadi palet Oranye Rakit AI (#e7553c) untuk tombol & aksi.
+-  - red     : Khusus status dicabut / tindakan merusak.
  */
 @theme {
     --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-    --color-pine-50: #fff3ef;
-    --color-pine-100: #ffe5dd;
-    --color-pine-300: #c69c91;
-    --color-pine-500: #b94c38;
-    --color-pine-700: #843323;
-    --color-pine-800: #5e2c23;
-    --color-pine-900: #40231d;
-    --color-pine-950: #2a1713;
+    /* Base Dark / Slate (Pengganti warna coklat/hijau lama) */
+    --color-pine-50: #f8fafc;
+    --color-pine-100: #f1f5f9;
+    --color-pine-300: #cbd5e1;
+    --color-pine-500: #64748b;
+    --color-pine-700: #334155;
+    --color-pine-800: #1e293b;
+    --color-pine-900: #0f172a;
+    --color-pine-950: #020617;
 
-    --color-paper: #fbf6f4;
-    --color-ink: #2b1c18;
-    --color-ink-soft: #79615a;
-    --color-line: #efddd7;
-    --color-emerald-50: #fff0ec;
-    --color-emerald-100: #ffe0d8;
-    --color-emerald-300: #f6aa9a;
-    --color-emerald-600: #e7553c;
-    --color-emerald-700: #c94731;
-    --color-emerald-800: #a53a28;
-    --color-emerald-900: #7f2c20;
+    /* Background & Lines */
+    --color-paper: #ffffff;
+    --color-ink: #0f172a;
+    --color-ink-soft: #64748b;
+    --color-line: #e2e8f0;
+
+    /* Primary Rakit AI Orange (Menggantikan Emerald) */
+    --color-emerald-50: #fdf3f1;
+    --color-emerald-100: #fae4df;
+    --color-emerald-300: #f2ae9f;
+    --color-emerald-600: #e7553c; /* Warna utama Rakit AI */
+    --color-emerald-700: #c23e27;
+    --color-emerald-800: #a03522;
+    --color-emerald-900: #842f1f;
 }
 
 @layer base {
@@ -52,7 +56,7 @@
     }
 
     dialog::backdrop {
-        background: rgb(42 23 19 / 0.55);
+        background: rgb(15 23 42 / 0.55);
         backdrop-filter: blur(2px);
     }
 }
@@ -117,21 +121,24 @@
 
 /* Panel status halaman publik */
 .panel-valid {
+    /* Status Valid = Biru Gradasi dengan Glow Putih Biru */
     background:
-        radial-gradient(90% 70% at 50% -10%, rgb(255 214 202 / 0.55) 0%, transparent 62%),
+        radial-gradient(90% 70% at 50% -10%, rgb(191 219 254 / 0.4) 0%, transparent 62%),
+        linear-gradient(180deg, #3b82f6 0%, #2563eb 55%, #1d4ed8 100%);
+}
+
+.panel-unknown {
+    /* Status Draft = Oranye Rakit AI (#e7553c) dengan Glow Halus */
+    background:
+        radial-gradient(90% 70% at 50% -10%, rgb(254 215 170 / 0.3) 0%, transparent 62%),
         linear-gradient(180deg, #f07860 0%, #e7553c 55%, #b63a28 100%);
 }
 
 .panel-revoked {
+    /* Status Dicabut / Tidak Ditemukan = Merah Gelap dengan Glow Merah Muda */
     background:
-        radial-gradient(90% 70% at 50% -10%, rgb(252 165 165 / 0.45) 0%, transparent 62%),
-        linear-gradient(180deg, #cbd5e1 0%, #94a3b8 55%, #64748b 100%);
-}
-
-.panel-unknown {
-    background:
-        radial-gradient(90% 70% at 50% -10%, rgb(203 213 225 / 0.4) 0%, transparent 62%),
-        linear-gradient(180deg, #64748b 0%, #475569 55%, #334155 100%);
+        radial-gradient(90% 70% at 50% -10%, rgb(254 202 202 / 0.3) 0%, transparent 62%),
+        linear-gradient(180deg, #ef4444 0%, #dc2626 55%, #991b1b 100%);
 }
 
 /* Pola titik halus pada hero halaman publik */

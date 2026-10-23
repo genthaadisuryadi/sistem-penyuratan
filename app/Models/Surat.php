@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 #[Fillable([
-    'uuid', 'kode_verifikasi', 'jenis_surat_id', 'nomor_surat', 'perihal', 'ditujukan_kepada', 'tanggal_surat',
+    'uuid', 'kode_verifikasi', 'nama_instansi', 'jenis_surat_id', 'nomor_surat', 'perihal', 'ditujukan_kepada', 'tanggal_surat',
     'penandatangan_id', 'penandatangan_nama', 'penandatangan_jabatan', 'qr_posisi', 'qr_halaman',
     'file_asli_path', 'file_final_path', 'file_hash_sha256', 'file_size',
     'status', 'published_at', 'alasan_pencabutan', 'revoked_at', 'revoked_by', 'created_by',

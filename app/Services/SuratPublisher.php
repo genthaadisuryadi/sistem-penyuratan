@@ -48,7 +48,8 @@ class SuratPublisher
                 halaman: HalamanQr::from($data['qr_halaman']),
                 meta: [
                     'judul' => $data['perihal'],
-                    'pembuat' => (string) config('penyuratan.instansi.nama'),
+                    // PERBAIKAN: Mengambil metadata pembuat PDF dari input nama instansi
+                    'pembuat' => $data['nama_instansi'], 
                 ],
             );
 
@@ -56,6 +57,8 @@ class SuratPublisher
                 $surat = Surat::create([
                     'uuid' => $uuid,
                     'kode_verifikasi' => $kode,
+                    // PERBAIKAN: Menyisipkan input nama instansi ke database
+                    'nama_instansi' => $data['nama_instansi'], 
                     'jenis_surat_id' => $data['jenis_surat_id'],
                     'nomor_surat' => $data['nomor_surat'],
                     'perihal' => $data['perihal'],
