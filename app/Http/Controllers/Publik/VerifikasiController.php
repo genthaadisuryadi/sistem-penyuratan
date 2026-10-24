@@ -34,15 +34,25 @@ class VerifikasiController extends Controller
 
     public function cari(Request $request): RedirectResponse
     {
-        $data = $request->validate(['kode' => ['required', 'string', 'max:30']], [], ['kode' => 'kode verifikasi']);
+        // PERBAIKAN: Validasi input diganti dari 'kode' menjadi 'nomor_surat'
+        $data = $request->validate(
+            ['nomor_surat' => ['required', 'string', 'max:255']], 
+            [], 
+            ['nomor_surat' => 'nomor surat']
+        );
 
-        $kode = Surat::normalisasiKode($data['kode']);
-        $surat = strlen($kode) === 10 ? Surat::where('kode_verifikasi', $kode)->first() : null;
+        $nomor = trim($data['nomor_surat']);
+        
+        // PERBAIKAN: Pencarian kini langsung mencocokkan ke kolom nomor_surat
+        $surat = Surat::where('nomor_surat', $nomor)->first();
 
         if (! $surat) {
-            return back()->withInput()->withErrors(['kode' => 'Kode tidak ditemukan. Periksa kembali penulisan kode di bawah QR pada surat Anda.']);
+            return back()->withInput()->withErrors([
+                'nomor_surat' => 'Surat dengan nomor tersebut tidak ditemukan. Pastikan penulisan nomor (termasuk garis miring) sudah sama persis.'
+            ]);
         }
 
+        // Jika ketemu, alihkan ke halaman detail dokumen
         return redirect()->route('verifikasi.show', $surat->uuid);
     }
 
