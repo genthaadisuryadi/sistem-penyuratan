@@ -50,6 +50,7 @@ class SuratPublisher
                     'judul' => $data['perihal'],
                     // PERBAIKAN: Mengambil metadata pembuat PDF dari input nama instansi
                     'pembuat' => $data['nama_instansi'], 
+                    'logo_qr' => $data['logo_qr'] ?? null,
                 ],
             );
 

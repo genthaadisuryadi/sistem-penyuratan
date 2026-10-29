@@ -6,6 +6,7 @@ use App\Enums\HalamanQr;
 use App\Enums\PosisiQr;
 use App\Exceptions\PdfTidakDapatDiprosesException;
 use setasign\Fpdi\FpdiException;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PdfStamperService
 {
@@ -15,10 +16,7 @@ class PdfStamperService
     ) {}
 
     /**
-     * Menyalin seluruh halaman PDF sumber ke PDF baru dan menempelkan QR Code
-     * (vektor) + kode verifikasi pada satu halaman.
-     *
-     * @param  array{judul?: string, pembuat?: string}  $meta
+     * @param  array{judul?: string, pembuat?: string, logo_qr?: \Illuminate\Http\UploadedFile}  $meta
      */
     public function stempel(
         string $sumber,
@@ -29,14 +27,10 @@ class PdfStamperService
         HalamanQr $halaman,
         array $meta = [],
     ): void {
-        $matrix = $this->qr->matrix($url);
-
         try {
-            $this->tulis($sumber, $tujuan, $matrix, $kode, $posisi, $halaman, $meta);
-
+            $this->tulis($sumber, $tujuan, $url, $kode, $posisi, $halaman, $meta);
             return;
         } catch (FpdiException $e) {
-            // Lanjut ke jalur cadangan (Ghostscript) di bawah.
             $penyebab = $e;
         }
 
@@ -44,7 +38,7 @@ class PdfStamperService
 
         try {
             $this->normalizer->turunkanVersi($sumber, $dinormalisasi);
-            $this->tulis($dinormalisasi, $tujuan, $matrix, $kode, $posisi, $halaman, $meta);
+            $this->tulis($dinormalisasi, $tujuan, $url, $kode, $posisi, $halaman, $meta);
         } catch (FpdiException) {
             throw new PdfTidakDapatDiprosesException(
                 'PDF tidak dapat dibaca. Pastikan file tidak terenkripsi atau terproteksi kata sandi.',
@@ -56,13 +50,12 @@ class PdfStamperService
     }
 
     /**
-     * @param  array<int, array<int, bool>>  $matrix
-     * @param  array{judul?: string, pembuat?: string}  $meta
+     * @param  array{judul?: string, pembuat?: string, logo_qr?: \Illuminate\Http\UploadedFile}  $meta
      */
     private function tulis(
         string $sumber,
         string $tujuan,
-        array $matrix,
+        string $url,
         string $kode,
         PosisiQr $posisi,
         HalamanQr $halaman,
@@ -80,6 +73,19 @@ class PdfStamperService
         $jumlah = $pdf->setSourceFile($sumber);
         $target = $halaman === HalamanQr::Pertama ? 1 : $jumlah;
 
+        // PERBAIKAN: Persiapkan file PNG sementara untuk QR Code
+        $tempQrPath = tempnam(sys_get_temp_dir(), 'qr_').'.png';
+        
+        $qrBuilder = QrCode::format('png')->size(300)->margin(1)->errorCorrection('H');
+        
+        // Sisipkan logo ke QR jika ada
+        if (isset($meta['logo_qr'])) {
+            $qrBuilder->merge($meta['logo_qr']->getRealPath(), 0.25, true);
+        }
+        
+        // Simpan QR image ke file temporary
+        file_put_contents($tempQrPath, $qrBuilder->generate($url));
+
         for ($i = 1; $i <= $jumlah; $i++) {
             $template = $pdf->importPage($i);
             $ukuran = $pdf->getTemplateSize($template);
@@ -88,17 +94,18 @@ class PdfStamperService
             $pdf->useTemplate($template);
 
             if ($i === $target) {
-                $this->gambarStempel($pdf, $ukuran['width'], $ukuran['height'], $matrix, $kode, $posisi);
+                // Lempar path gambar PNG untuk ditempel ke dokumen
+                $this->gambarStempelDenganLogo($pdf, $ukuran['width'], $ukuran['height'], $tempQrPath, $kode, $posisi);
             }
         }
 
         $pdf->Output('F', $tujuan);
+        
+        // Hapus file temporary QR
+        @unlink($tempQrPath);
     }
 
-    /**
-     * @param  array<int, array<int, bool>>  $matrix
-     */
-    private function gambarStempel(StampPdf $pdf, float $w, float $h, array $matrix, string $kode, PosisiQr $posisi): void
+    private function gambarStempelDenganLogo(StampPdf $pdf, float $w, float $h, string $qrImagePath, string $kode, PosisiQr $posisi): void
     {
         $qrSize = (float) config('penyuratan.qr.size_mm');
         $margin = (float) config('penyuratan.qr.margin_mm');
@@ -115,48 +122,26 @@ class PdfStamperService
         };
         $y = $posisi->atas() ? $margin : $h - $margin - $boxH;
 
-        // Latar putih + bingkai tipis, agar QR tetap terbaca di atas konten apa pun.
+        // Latar putih + bingkai tipis
         $pdf->SetFillColor(255, 255, 255);
         $pdf->SetDrawColor(203, 213, 225);
         $pdf->SetLineWidth(0.15);
         $pdf->Rect($x, $y, $boxW, $boxH, 'DF');
 
-        // Modul QR, digabung per-baris agar file kecil.
-        $n = count($matrix);
-        $modul = $qrSize / $n;
-        $overdraw = 0.02; // tutup celah anti-aliasing antar-modul di sebagian viewer
-        $rects = [];
-
-        foreach ($matrix as $baris => $kolom) {
-            $c = 0;
-            while ($c < $n) {
-                if (! $kolom[$c]) {
-                    $c++;
-
-                    continue;
-                }
-                $awal = $c;
-                while ($c < $n && $kolom[$c]) {
-                    $c++;
-                }
-                $rects[] = [
-                    $x + $quiet + $awal * $modul,
-                    $y + $quiet + $baris * $modul,
-                    ($c - $awal) * $modul + $overdraw,
-                    $modul + $overdraw,
-                ];
-            }
-        }
-        $pdf->isiPersegi($rects);
+        // PERBAIKAN: Cetak gambar PNG QR Code (dengan atau tanpa logo) ke dalam PDF
+        // Parameter: file, X, Y, Width, Height, Type
+        $pdf->Image($qrImagePath, $x + $quiet, $y + $quiet, $qrSize, $qrSize, 'PNG');
 
         // Label di bawah QR.
         $pdf->SetTextColor(51, 65, 85);
         $pdf->SetFont('Helvetica', '', 5.6);
         $pdf->SetXY($x, $y + $quiet + $qrSize + 0.6);
         $pdf->Cell($boxW, 2.6, 'Pindai untuk verifikasi keaslian', 0, 2, 'C');
+        
+        // Hapus kode unik, sekarang instruksikan pencarian pakai nomor surat
         $pdf->SetFont('Helvetica', 'B', 6.4);
         $pdf->SetX($x);
-        $pdf->Cell($boxW, 3.0, 'Kode: '.\App\Models\Surat::formatKode($kode), 0, 0, 'C');
+        $pdf->Cell($boxW, 3.0, 'Sistem Verifikasi Resmi', 0, 0, 'C');
     }
 
     private function latin1(string $teks): string

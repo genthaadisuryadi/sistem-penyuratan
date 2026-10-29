@@ -53,7 +53,10 @@ Route::middleware(['auth', 'admin.aktif', 'no-store'])->prefix('admin')->name('a
 
     Route::get('surat', [SuratController::class, 'index'])->name('surat.index');
     Route::get('surat/buat', [SuratController::class, 'create'])->name('surat.create');
-    Route::get('qr-preview', [SuratController::class, 'previewQr'])->middleware('throttle:60,1')->name('qr-preview');
+    
+    // PERBAIKAN: Ubah menjadi POST agar bisa menerima gambar logo untuk di-merge
+    Route::post('qr-preview', [SuratController::class, 'previewQr'])->middleware('throttle:60,1')->name('qr-preview');
+    
     Route::post('surat', [SuratController::class, 'store'])->middleware('throttle:30,1')->name('surat.store');
     Route::get('surat/{surat}', [SuratController::class, 'show'])->name('surat.show');
     Route::get('surat/{surat}/unduh', [SuratController::class, 'download'])->name('surat.unduh');

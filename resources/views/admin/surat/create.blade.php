@@ -5,14 +5,12 @@
         <p class="mt-1 text-sm text-slate-500">Isi data surat, unduh QR Code, lalu unggah PDF surat Anda.</p>
     </div>
 
-    <form method="POST" action="{{ route('admin.surat.store') }}" enctype="multipart/form-data"
-          data-loading-text="Memproses PDF..." data-qr-live data-qr-endpoint="{{ route('admin.qr-preview') }}" 
-          data-qr-base-url="{{ rtrim(config('penyuratan.verification_base_url'), '/') }}" novalidate>
+    <form method="POST" action="{{ route('admin.surat.store') }}" enctype="multipart/form-data" novalidate>
         @csrf
 
         <!-- ================= STEP 1: FORMULIR & QR CODE ================= -->
         <div id="step-1-container" class="grid items-start gap-6 lg:grid-cols-5">
-            <section class="panel p-6 lg:col-span-3 border-slate-200" aria-labelledby="judul-data">
+            <section class="panel border-slate-200 p-6 lg:col-span-3" aria-labelledby="judul-data">
                 <h2 id="judul-data" class="text-base font-semibold text-slate-900">Informasi surat</h2>
 
                 <div class="mt-5">
@@ -29,9 +27,6 @@
                             <option value="{{ $jenis->id }}" @selected((string) old('jenis_surat_id') === (string) $jenis->id)>{{ $jenis->nama }} ({{ $jenis->kode }})</option>
                         @endforeach
                     </select>
-                    @if ($jenisSurat->isEmpty())
-                        <p class="field-error">Belum ada Jenis Surat aktif. Hubungi Sekretariat atau Super Admin untuk menambahkan data master.</p>
-                    @endif
                     @error('jenis_surat_id') <p class="field-error" role="alert">{{ $message }}</p> @enderror
                 </div>
 
@@ -50,13 +45,13 @@
 
                 <div class="mt-5">
                     <label for="perihal" class="label text-slate-700">Subject / Perihal</label>
-                    <input id="perihal" name="perihal" type="text" value="{{ old('perihal') }}" required maxlength="255" placeholder="{{ $isUnit ? '' : 'Undangan rapat koordinasi' }}" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" @error('perihal') aria-invalid="true" @enderror>
+                    <input id="perihal" name="perihal" type="text" value="{{ old('perihal') }}" required maxlength="255" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" @error('perihal') aria-invalid="true" @enderror>
                     @error('perihal') <p class="field-error" role="alert">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="mt-5">
                     <label for="ditujukan_kepada" class="label text-slate-700">Ditujukan Kepada</label>
-                    <input id="ditujukan_kepada" name="ditujukan_kepada" type="text" value="{{ old('ditujukan_kepada') }}" required maxlength="255" placeholder="{{ $isUnit ? '' : 'Kepala Unit / nama penerima' }}" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" @error('ditujukan_kepada') aria-invalid="true" @enderror>
+                    <input id="ditujukan_kepada" name="ditujukan_kepada" type="text" value="{{ old('ditujukan_kepada') }}" required maxlength="255" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" @error('ditujukan_kepada') aria-invalid="true" @enderror>
                     @error('ditujukan_kepada') <p class="field-error" role="alert">{{ $message }}</p> @enderror
                 </div>
 
@@ -66,51 +61,54 @@
                         <div class="rounded-lg border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
                             <p class="font-semibold text-slate-900">{{ auth()->user()->name }}</p>
                             <p class="mt-0.5 text-sm text-slate-500">{{ auth()->user()->jabatan ?: auth()->user()->role->label() }}</p>
-                            <p class="mt-2 text-xs text-slate-500">Sesuai role Unit, surat hanya dapat ditandatangani oleh akun yang sedang login.</p>
                         </div>
                     @else
                         <div class="grid gap-4 sm:grid-cols-2">
-                            <div><label for="penandatangan_nama" class="label text-slate-700">Nama penandatangan</label><input id="penandatangan_nama" name="penandatangan_nama" type="text" value="{{ old('penandatangan_nama') }}" maxlength="150" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" required placeholder="Nama lengkap">@error('penandatangan_nama') <p class="field-error" role="alert">{{ $message }}</p> @enderror</div>
-                            <div><label for="penandatangan_jabatan" class="label text-slate-700">Posisi / Jabatan</label><input id="penandatangan_jabatan" name="penandatangan_jabatan" type="text" value="{{ old('penandatangan_jabatan') }}" maxlength="150" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" required placeholder="Contoh: Rektor">@error('penandatangan_jabatan') <p class="field-error" role="alert">{{ $message }}</p> @enderror</div>
+                            <div><label for="penandatangan_nama" class="label text-slate-700">Nama penandatangan</label><input id="penandatangan_nama" name="penandatangan_nama" type="text" value="{{ old('penandatangan_nama') }}" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" required placeholder="Nama lengkap"></div>
+                            <div><label for="penandatangan_jabatan" class="label text-slate-700">Posisi / Jabatan</label><input id="penandatangan_jabatan" name="penandatangan_jabatan" type="text" value="{{ old('penandatangan_jabatan') }}" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" required placeholder="Contoh: Rektor"></div>
                         </div>
-                        <p class="hint text-slate-500">Sekretariat dan Super Admin dapat menerbitkan surat atas nama siapa pun, termasuk penandatangan yang belum terdaftar sebagai pengguna.</p>
                     @endif
                 </div>
             </section>
 
-            <section class="panel p-6 lg:col-span-2 border-slate-200" aria-labelledby="judul-qr">
-                <h2 id="judul-qr" class="text-base font-semibold text-slate-900">QR Code Verifikasi</h2>
+            <section class="panel border-slate-200 p-6 lg:col-span-2" aria-labelledby="judul-qr">
+                <h2 id="judul-qr" class="text-base font-semibold text-slate-900">Desain & QR Code</h2>
+
+                <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <label for="logo_qr" class="text-sm font-semibold text-slate-800">Logo Tengah QR (Opsional)</label>
+                    <input type="file" id="logo_qr" name="logo_qr" accept="image/png, image/jpeg, image/jpg" class="mt-2 block w-full text-sm text-slate-500 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-[#e7553c] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#b63a28]">
+                    <p class="mt-1 text-[11px] text-slate-500">Gunakan rasio persegi 1:1, Maksimal 2 MB.</p>
+                </div>
+                @error('logo_qr') <p class="field-error mt-1" role="alert">{{ $message }}</p> @enderror
 
                 <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4" aria-live="polite">
-                    <p class="text-sm font-semibold text-slate-800">Pratinjau QR Code</p>
-                    <div data-live-qr class="mx-auto mt-3 flex min-h-40 w-40 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white p-3 text-center text-xs text-slate-500 shadow-sm">
-                        Masukkan nomor surat dan pilih jenis surat untuk menampilkan QR.
+                    <p class="text-sm font-semibold text-slate-800">Pratinjau Hasil</p>
+                    <div data-live-qr class="mx-auto mt-3 flex min-h-48 w-48 items-center justify-center overflow-hidden rounded-lg border border-dashed border-slate-300 bg-white p-2 text-center text-xs text-slate-500 shadow-sm transition-all">
+                        Isi nomor surat dan jenis surat di samping untuk menampilkan QR.
                     </div>
-                    <p data-live-qr-url class="mt-3 break-all text-xs text-slate-500"></p>
                     
-                    <button type="button" data-download-qr disabled class="btn-primary mt-4 w-full transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button type="button" data-download-qr disabled class="btn-primary mt-4 w-full transition-all disabled:cursor-not-allowed disabled:opacity-50">
                         <x-icon name="unduh" class="size-4"/>
                         Download QR Code
                     </button>
-                    <p class="mt-2 text-xs text-slate-500 text-center font-medium">Anda wajib mengunduh QR Code terlebih dahulu untuk melanjutkan.</p>
+                    <p class="mt-2 text-center font-medium text-xs text-slate-500">Anda wajib mengunduh QR Code terlebih dahulu untuk melanjutkan.</p>
                 </div>
 
-                <button type="button" id="btn-next-step" disabled class="btn-primary btn-lg mt-6 w-full transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                <button type="button" id="btn-next-step" disabled class="btn-primary btn-lg mt-6 w-full transition-all disabled:cursor-not-allowed disabled:opacity-50">
                     Selanjutnya: Upload PDF &nbsp; &rarr;
                 </button>
             </section>
         </div>
 
         <!-- ================= STEP 2: UPLOAD PDF ================= -->
-        <div id="step-2-container" class="hidden grid items-start gap-6 lg:grid-cols-5 mt-6">
-            <section class="panel p-6 lg:col-span-3 lg:col-start-2 border-slate-200" aria-labelledby="judul-berkas">
-                <h2 id="judul-berkas" class="text-base font-semibold text-center text-slate-900">Upload Surat Ber-QR Code</h2>
-                <p class="mt-2 text-sm text-slate-500 text-center mb-6">Pastikan Anda telah memasukkan QR Code yang diunduh sebelumnya ke dalam dokumen surat asli sebelum menyimpannya sebagai PDF, lalu unggah file PDF tersebut di bawah ini.</p>
+        <div id="step-2-container" class="mt-6 hidden grid items-start gap-6 lg:grid-cols-5">
+            <section class="panel border-slate-200 p-6 lg:col-span-3 lg:col-start-2">
+                <h2 class="text-center text-base font-semibold text-slate-900">Upload Surat Ber-QR Code</h2>
+                <p class="mb-6 mt-2 text-center text-sm text-slate-500">Pastikan Anda telah memasukkan QR Code yang diunduh sebelumnya ke dalam dokumen surat asli sebelum menyimpannya sebagai PDF, lalu unggah file PDF tersebut di bawah ini.</p>
 
                 <div class="mt-5">
-                    <span class="label sr-only" id="label-berkas">Upload PDF Surat</span>
                     <label data-dropzone data-max-kb="{{ $maksKb }}" for="berkas" class="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center transition-colors hover:border-[#e7553c] hover:bg-slate-100 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[#e7553c]">
-                        <input id="berkas" name="berkas" type="file" accept="application/pdf,.pdf" class="sr-only" aria-labelledby="label-berkas" required>
+                        <input id="berkas" name="berkas" type="file" accept="application/pdf,.pdf" class="sr-only" required>
                         <div data-dz-empty>
                             <x-icon name="unggah" class="mx-auto size-8 text-[#e7553c]"/>
                             <p class="mt-3 text-sm font-medium text-slate-700">Tarik PDF ke sini atau <span class="text-[#e7553c] underline">pilih dari komputer</span></p>
@@ -127,22 +125,17 @@
                     @error('berkas') <p class="field-error" role="alert">{{ $message }}</p> @enderror
                 </div>
 
-                {{-- PERUBAHAN: Teks dihapus, Posisi QR dibuat jauh lebih besar dan diletakkan di tengah --}}
                 <div class="mt-6 flex flex-col items-center justify-center rounded-xl border border-slate-100 bg-slate-50 p-6">
                     <p class="mb-4 text-xs font-bold uppercase tracking-widest text-slate-400">Contoh Posisi QR Code</p>
-                    <x-letak-qr class="w-32 sm:w-40 drop-shadow-md"/>
+                    <x-letak-qr class="w-32 drop-shadow-md sm:w-40"/>
                 </div>
 
-                <div class="mt-6 flex flex-col-reverse sm:flex-row gap-3">
-                    <button type="button" id="btn-prev-step" class="btn-secondary w-full sm:w-1/3 justify-center">
-                        &larr; &nbsp; Kembali
-                    </button>
-                    <button type="submit" class="btn-primary w-full sm:w-2/3 justify-center" @disabled($jenisSurat->isEmpty())>
-                        <x-icon name="qr" class="size-5"/>
-                        Simpan Surat (Draft)
+                <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row">
+                    <button type="button" id="btn-prev-step" class="btn-secondary w-full justify-center sm:w-1/3">&larr; &nbsp; Kembali</button>
+                    <button type="submit" class="btn-primary w-full justify-center sm:w-2/3">
+                        <x-icon name="qr" class="size-5"/> Simpan Surat (Draft)
                     </button>
                 </div>
-                <p class="hint text-center mt-4 text-slate-500">Surat ini akan otomatis disimpan dengan status Draf.</p>
             </section>
         </div>
     </form>
@@ -155,35 +148,63 @@
             const step1 = document.getElementById('step-1-container');
             const step2 = document.getElementById('step-2-container');
 
-            if(btnDownloadQr && btnNext) {
-                btnDownloadQr.addEventListener('click', function() {
-                    btnNext.disabled = false;
-                    btnNext.classList.remove('opacity-50', 'cursor-not-allowed', 'disabled:opacity-50', 'disabled:cursor-not-allowed');
-                });
-            }
-
             if(btnNext && step1 && step2) {
-                btnNext.addEventListener('click', function() {
-                    step1.classList.add('hidden');
-                    step2.classList.remove('hidden');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                btnNext.addEventListener('click', function() { step1.classList.add('hidden'); step2.classList.remove('hidden'); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+                btnPrev.addEventListener('click', function() { step2.classList.add('hidden'); step1.classList.remove('hidden'); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+            }
+            @if($errors->has('berkas')) if(step1 && step2) { step1.classList.add('hidden'); step2.classList.remove('hidden'); } @endif
+
+            // LOGIKA PREVIEW QR MERGE AJAX POST
+            const nomorInput = document.getElementById('nomor_surat');
+            const jenisInput = document.getElementById('jenis_surat_id');
+            const logoInput = document.getElementById('logo_qr');
+            const qrContainer = document.querySelector('[data-live-qr]');
+            
+            function updateQr() {
+                if(!nomorInput.value || !jenisInput.value) return;
+                
+                const formData = new FormData();
+                formData.append('nomor_surat', nomorInput.value);
+                formData.append('jenis_surat_id', jenisInput.value);
+                if(logoInput.files.length > 0) formData.append('logo_qr', logoInput.files[0]);
+                formData.append('_token', '{{ csrf_token() }}');
+                
+                qrContainer.innerHTML = '<span class="animate-pulse text-xs text-slate-500">Memuat gambar...</span>';
+                
+                fetch('{{ route('admin.qr-preview') }}', {
+                    method: 'POST', // WAJIB POST AGAR BISA KIRIM GAMBAR LOGO
+                    body: formData
+                })
+                .then(async res => {
+                    if(!res.ok) throw new Error('Gagal');
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    
+                    qrContainer.innerHTML = `<img src="${url}" class="w-full h-full object-contain drop-shadow-sm" alt="QR Code">`;
+                    qrContainer.classList.remove('border-dashed', 'p-2');
+                    
+                    btnDownloadQr.disabled = false;
+                    
+                    btnDownloadQr.onclick = (e) => {
+                        e.preventDefault();
+                        const a = document.createElement('a');
+                        a.href = url;
+                        const ext = logoInput.files.length > 0 ? 'png' : 'svg';
+                        a.download = `QR_${nomorInput.value.replace(/[\/\\]/g, '-')}.${ext}`;
+                        a.click();
+                        if(btnNext) btnNext.disabled = false;
+                    };
+                })
+                .catch(err => {
+                    qrContainer.innerHTML = '<span class="text-red-500 text-xs">Gagal. Cek koneksi / jenis surat.</span>';
                 });
             }
 
-            if(btnPrev && step1 && step2) {
-                btnPrev.addEventListener('click', function() {
-                    step2.classList.add('hidden');
-                    step1.classList.remove('hidden');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
-            }
-
-            @if($errors->has('berkas'))
-                if(step1 && step2) {
-                    step1.classList.add('hidden');
-                    step2.classList.remove('hidden');
-                }
-            @endif
+            let timeout;
+            function debounceUpdateQr() { clearTimeout(timeout); timeout = setTimeout(updateQr, 500); }
+            if(nomorInput) nomorInput.addEventListener('input', debounceUpdateQr);
+            if(jenisInput) jenisInput.addEventListener('change', updateQr);
+            if(logoInput) logoInput.addEventListener('change', updateQr);
         });
     </script>
 </x-layouts.admin>
