@@ -20,7 +20,7 @@ class StoreSuratRequest extends FormRequest
         $unit = $this->user()?->role === RoleAdmin::Unit;
 
         return [
-            'nama_instansi' => ['required', 'string', 'max:255'], 
+            'nama_instansi' => ['required', 'string', 'max:255'],
             'jenis_surat_id' => ['required', 'integer', Rule::exists('jenis_surat', 'id')->where('is_active', true)],
             'nomor_surat' => ['required', 'string', 'max:100', Rule::unique('surat', 'nomor_surat')],
             'tanggal_surat' => ['required', 'date'],
@@ -29,7 +29,7 @@ class StoreSuratRequest extends FormRequest
             'penandatangan_id' => ['nullable', 'prohibited'],
             'penandatangan_nama' => $unit ? ['nullable', 'prohibited'] : ['required', 'string', 'max:150'],
             'penandatangan_jabatan' => $unit ? ['nullable', 'prohibited'] : ['required', 'string', 'max:150'],
-            'logo_qr' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'], // PERBAIKAN: Izinkan input logo QR
+            'logo_qr' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
             'berkas' => [
                 'required', 'file',
                 'mimetypes:application/pdf',

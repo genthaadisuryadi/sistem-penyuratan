@@ -154,7 +154,6 @@
             }
             @if($errors->has('berkas')) if(step1 && step2) { step1.classList.add('hidden'); step2.classList.remove('hidden'); } @endif
 
-            // LOGIKA PREVIEW QR MERGE AJAX POST
             const nomorInput = document.getElementById('nomor_surat');
             const jenisInput = document.getElementById('jenis_surat_id');
             const logoInput = document.getElementById('logo_qr');
@@ -172,7 +171,7 @@
                 qrContainer.innerHTML = '<span class="animate-pulse text-xs text-slate-500">Memuat gambar...</span>';
                 
                 fetch('{{ route('admin.qr-preview') }}', {
-                    method: 'POST', // WAJIB POST AGAR BISA KIRIM GAMBAR LOGO
+                    method: 'POST', 
                     body: formData
                 })
                 .then(async res => {
@@ -189,8 +188,8 @@
                         e.preventDefault();
                         const a = document.createElement('a');
                         a.href = url;
-                        const ext = logoInput.files.length > 0 ? 'png' : 'svg';
-                        a.download = `QR_${nomorInput.value.replace(/[\/\\]/g, '-')}.${ext}`;
+                        // Tetap download sebagai SVG karena matriks di controller mengembalikan vektor SVG
+                        a.download = `QR_${nomorInput.value.replace(/[\/\\]/g, '-')}.svg`;
                         a.click();
                         if(btnNext) btnNext.disabled = false;
                     };

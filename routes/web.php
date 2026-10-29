@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Halaman publik (verifikasi)
 |--------------------------------------------------------------------------
-| URL verifikasi memakai nomor surat; tautan UUID lama tetap didukung. ID internal tidak muncul di URL.
 */
 Route::get('/', [VerifikasiController::class, 'beranda'])->name('beranda');
 Route::post('/cek', [VerifikasiController::class, 'cari'])->middleware('throttle:cek-kode')->name('verifikasi.cari');
@@ -53,10 +52,7 @@ Route::middleware(['auth', 'admin.aktif', 'no-store'])->prefix('admin')->name('a
 
     Route::get('surat', [SuratController::class, 'index'])->name('surat.index');
     Route::get('surat/buat', [SuratController::class, 'create'])->name('surat.create');
-    
-    // PERBAIKAN: Ubah menjadi POST agar bisa menerima gambar logo untuk di-merge
     Route::post('qr-preview', [SuratController::class, 'previewQr'])->middleware('throttle:60,1')->name('qr-preview');
-    
     Route::post('surat', [SuratController::class, 'store'])->middleware('throttle:30,1')->name('surat.store');
     Route::get('surat/{surat}', [SuratController::class, 'show'])->name('surat.show');
     Route::get('surat/{surat}/unduh', [SuratController::class, 'download'])->name('surat.unduh');

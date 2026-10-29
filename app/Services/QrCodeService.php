@@ -16,7 +16,7 @@ class QrCodeService
      */
     public function matrix(string $isi): array
     {
-        $qr = Encoder::encode($isi, ErrorCorrectionLevel::M());
+        $qr = Encoder::encode($isi, ErrorCorrectionLevel::H());
         $byteMatrix = $qr->getMatrix();
 
         $rows = [];
@@ -32,7 +32,7 @@ class QrCodeService
     }
 
     /** SVG hitam di atas putih lengkap dengan quiet zone (untuk pratinjau di dasbor). */
-    public function svg(string $isi, int $quiet = 2): string
+    public function svg(string $isi, int $quiet = 2, ?string $logoBase64 = null): string
     {
         $rows = $this->matrix($isi);
         $n = count($rows);
@@ -44,7 +44,6 @@ class QrCodeService
             while ($x < $n) {
                 if (! $row[$x]) {
                     $x++;
-
                     continue;
                 }
                 $start = $x;
@@ -55,10 +54,25 @@ class QrCodeService
             }
         }
 
-        return sprintf(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %1$d %1$d" shape-rendering="crispEdges" role="img" aria-label="QR Code verifikasi"><rect width="%1$d" height="%1$d" fill="#fff"/><path d="%2$s" fill="#000"/></svg>',
+        $svg = sprintf(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %1$d %1$d" shape-rendering="crispEdges" role="img" aria-label="QR Code verifikasi"><rect width="%1$d" height="%1$d" fill="#fff"/><path d="%2$s" fill="#000"/>',
             $total,
             $path,
         );
+
+        if ($logoBase64) {
+            $logoSize = $total * 0.28;
+            $logoPos = ($total - $logoSize) / 2;
+            $svg .= sprintf(
+                '<rect x="%1$f" y="%1$f" width="%2$f" height="%2$f" fill="#fff"/><image x="%1$f" y="%1$f" width="%2$f" height="%2$f" href="%3$s"/>',
+                $logoPos,
+                $logoSize,
+                $logoBase64
+            );
+        }
+
+        $svg .= '</svg>';
+
+        return $svg;
     }
 }

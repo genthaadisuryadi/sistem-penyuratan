@@ -16,18 +16,14 @@ use Throwable;
 
 class SuratPublisher
 {
-    /** Tanpa 0/O/1/I agar mudah diketik ulang dari kertas. */
     private const ALFABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
     public function __construct(private readonly PdfStamperService $stamper) {}
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
     public function terbitkan(User $admin, array $data, UploadedFile $berkas): Surat
     {
         $disk = Storage::disk('surat');
-        $uuid = (string) Str::uuid(); // UUID v4 (acak), bukan v7 yang berurutan waktu
+        $uuid = (string) Str::uuid(); 
         $kode = $this->buatKode();
 
         $disk->makeDirectory('asli');
@@ -48,8 +44,7 @@ class SuratPublisher
                 halaman: HalamanQr::from($data['qr_halaman']),
                 meta: [
                     'judul' => $data['perihal'],
-                    // PERBAIKAN: Mengambil metadata pembuat PDF dari input nama instansi
-                    'pembuat' => $data['nama_instansi'], 
+                    'pembuat' => $data['nama_instansi'],
                     'logo_qr' => $data['logo_qr'] ?? null,
                 ],
             );
@@ -58,7 +53,6 @@ class SuratPublisher
                 $surat = Surat::create([
                     'uuid' => $uuid,
                     'kode_verifikasi' => $kode,
-                    // PERBAIKAN: Menyisipkan input nama instansi ke database
                     'nama_instansi' => $data['nama_instansi'], 
                     'jenis_surat_id' => $data['jenis_surat_id'],
                     'nomor_surat' => $data['nomor_surat'],
@@ -85,7 +79,6 @@ class SuratPublisher
             });
         } catch (Throwable $e) {
             $disk->delete([$pathAsli, $pathFinal]);
-
             throw $e;
         }
     }
@@ -111,7 +104,6 @@ class SuratPublisher
         });
     }
 
-    /** @return bool false bila surat sudah berstatus ditarik */
     public function cabut(Surat $surat, User $admin, string $alasan): bool
     {
         return DB::transaction(function () use ($surat, $admin, $alasan) {
