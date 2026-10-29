@@ -6,6 +6,7 @@ use App\Enums\HalamanQr;
 use App\Enums\PosisiQr;
 use App\Exceptions\PdfTidakDapatDiprosesException;
 use setasign\Fpdi\FpdiException;
+use Illuminate\Http\UploadedFile;
 
 class PdfStamperService
 {
@@ -132,15 +133,25 @@ class PdfStamperService
         
         $pdf->isiPersegi($rects);
 
-        if (isset($meta['logo_qr'])) {
+        // PERBAIKAN: Secara eksplisit membaca tipe file agar FPDF tidak bingung
+        if (isset($meta['logo_qr']) && $meta['logo_qr'] instanceof UploadedFile) {
             $logoPath = $meta['logo_qr']->getRealPath();
+            
+            // Mengambil ekstensi asli (png, jpg, jpeg) dan mengubahnya menjadi HURUF BESAR
+            $logoExt = strtoupper($meta['logo_qr']->extension());
+            if ($logoExt === 'JPG') {
+                $logoExt = 'JPEG'; // FPDF mengenali JPG sebagai JPEG
+            }
+            
             $logoSize = $qrSize * 0.28; 
             $logoX = $x + $quiet + ($qrSize - $logoSize) / 2;
             $logoY = $y + $quiet + ($qrSize - $logoSize) / 2;
 
             $pdf->SetFillColor(255, 255, 255);
             $pdf->Rect($logoX, $logoY, $logoSize, $logoSize, 'F');
-            $pdf->Image($logoPath, $logoX, $logoY, $logoSize, $logoSize);
+            
+            // Menyisipkan parameter $logoExt ke pemanggilan fungsi Image()
+            $pdf->Image($logoPath, $logoX, $logoY, $logoSize, $logoSize, $logoExt);
         }
 
         $pdf->SetTextColor(51, 65, 85);
