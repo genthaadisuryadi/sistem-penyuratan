@@ -2,7 +2,7 @@
     <div class="mb-6">
         <p class="text-sm font-semibold uppercase tracking-[0.16em] text-[#e7553c]">Penerbitan dokumen</p>
         <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Buat surat baru</h1>
-        <p class="mt-1 text-sm text-slate-500">Isi data surat, unduh QR Code, lalu unggah PDF surat Anda.</p>
+        <p class="mt-1 text-sm text-slate-500">Isi data surat, unduh QR Code, lalu upload PDF surat Anda.</p>
     </div>
 
     <form method="POST" action="{{ route('admin.surat.store') }}" enctype="multipart/form-data" novalidate>
@@ -64,8 +64,14 @@
                         </div>
                     @else
                         <div class="grid gap-4 sm:grid-cols-2">
-                            <div><label for="penandatangan_nama" class="label text-slate-700">Nama penandatangan</label><input id="penandatangan_nama" name="penandatangan_nama" type="text" value="{{ old('penandatangan_nama') }}" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" required placeholder="Nama lengkap"></div>
-                            <div><label for="penandatangan_jabatan" class="label text-slate-700">Posisi / Jabatan</label><input id="penandatangan_jabatan" name="penandatangan_jabatan" type="text" value="{{ old('penandatangan_jabatan') }}" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" required placeholder="Contoh: Rektor"></div>
+                            <div>
+                                <label for="penandatangan_nama" class="label text-slate-700">Nama penandatangan</label>
+                                <input id="penandatangan_nama" name="penandatangan_nama" type="text" value="{{ old('penandatangan_nama') }}" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" required placeholder="Nama lengkap">
+                            </div>
+                            <div>
+                                <label for="penandatangan_jabatan" class="label text-slate-700">Posisi / Jabatan</label>
+                                <input id="penandatangan_jabatan" name="penandatangan_jabatan" type="text" value="{{ old('penandatangan_jabatan') }}" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" required placeholder="Contoh: Rektor">
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -74,24 +80,33 @@
             <section class="panel border-slate-200 p-6 lg:col-span-2" aria-labelledby="judul-qr">
                 <h2 id="judul-qr" class="text-base font-semibold text-slate-900">Desain & QR Code</h2>
 
-                <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <label for="logo_qr" class="text-sm font-semibold text-slate-800">Logo Tengah QR (Opsional)</label>
-                    <input type="file" id="logo_qr" name="logo_qr" accept="image/png, image/jpeg, image/jpg" class="mt-2 block w-full text-sm text-slate-500 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-[#e7553c] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#b63a28]">
-                    <p class="mt-1 text-[11px] text-slate-500">Gunakan rasio persegi 1:1, Maksimal 2 MB.</p>
+                <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <label for="qr_color" class="text-xs font-semibold text-slate-800">Warna QR</label>
+                        <div class="mt-2 flex items-center gap-3">
+                            <input type="color" id="qr_color" name="qr_color" value="#000000" class="h-9 w-full cursor-pointer rounded border border-slate-300 p-1">
+                        </div>
+                    </div>
+                    
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <label for="logo_qr" class="text-xs font-semibold text-slate-800">Logo Tengah</label>
+                        <input type="file" id="logo_qr" name="logo_qr" accept="image/png, image/jpeg, image/jpg" class="mt-2 block w-full text-xs text-slate-500 file:mr-2 file:cursor-pointer file:rounded-md file:border-0 file:bg-slate-200 file:px-2 file:py-1.5 file:text-xs file:font-semibold file:text-slate-700 hover:file:bg-slate-300">
+                    </div>
                 </div>
-                @error('logo_qr') <p class="field-error mt-1" role="alert">{{ $message }}</p> @enderror
+                @error('qr_color') <p class="field-error mt-1">{{ $message }}</p> @enderror
+                @error('logo_qr') <p class="field-error mt-1">{{ $message }}</p> @enderror
 
                 <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4" aria-live="polite">
                     <p class="text-sm font-semibold text-slate-800">Pratinjau Hasil</p>
                     <div data-live-qr class="mx-auto mt-3 flex min-h-48 w-48 items-center justify-center overflow-hidden rounded-lg border border-dashed border-slate-300 bg-white p-2 text-center text-xs text-slate-500 shadow-sm transition-all">
-                        Isi nomor surat dan jenis surat di samping untuk menampilkan QR.
+                        Isi data & jenis surat untuk pratinjau.
                     </div>
                     
                     <button type="button" data-download-qr disabled class="btn-primary mt-4 w-full transition-all disabled:cursor-not-allowed disabled:opacity-50">
                         <x-icon name="unduh" class="size-4"/>
                         Download QR Code
                     </button>
-                    <p class="mt-2 text-center font-medium text-xs text-slate-500">Anda wajib mengunduh QR Code terlebih dahulu untuk melanjutkan.</p>
+                    <p class="mt-2 text-center font-medium text-[11px] text-slate-500">Wajib diunduh untuk melanjutkan.</p>
                 </div>
 
                 <button type="button" id="btn-next-step" disabled class="btn-primary btn-lg mt-6 w-full transition-all disabled:cursor-not-allowed disabled:opacity-50">
@@ -157,6 +172,7 @@
             const nomorInput = document.getElementById('nomor_surat');
             const jenisInput = document.getElementById('jenis_surat_id');
             const logoInput = document.getElementById('logo_qr');
+            const colorInput = document.getElementById('qr_color');
             const qrContainer = document.querySelector('[data-live-qr]');
             
             function updateQr() {
@@ -165,15 +181,13 @@
                 const formData = new FormData();
                 formData.append('nomor_surat', nomorInput.value);
                 formData.append('jenis_surat_id', jenisInput.value);
+                formData.append('qr_color', colorInput.value);
                 if(logoInput.files.length > 0) formData.append('logo_qr', logoInput.files[0]);
                 formData.append('_token', '{{ csrf_token() }}');
                 
                 qrContainer.innerHTML = '<span class="animate-pulse text-xs text-slate-500">Memuat gambar...</span>';
                 
-                fetch('{{ route('admin.qr-preview') }}', {
-                    method: 'POST', 
-                    body: formData
-                })
+                fetch('{{ route('admin.qr-preview') }}', { method: 'POST', body: formData })
                 .then(async res => {
                     if(!res.ok) throw new Error('Gagal');
                     const blob = await res.blob();
@@ -183,27 +197,25 @@
                     qrContainer.classList.remove('border-dashed', 'p-2');
                     
                     btnDownloadQr.disabled = false;
-                    
                     btnDownloadQr.onclick = (e) => {
                         e.preventDefault();
                         const a = document.createElement('a');
                         a.href = url;
-                        // Tetap download sebagai SVG karena matriks di controller mengembalikan vektor SVG
                         a.download = `QR_${nomorInput.value.replace(/[\/\\]/g, '-')}.svg`;
                         a.click();
                         if(btnNext) btnNext.disabled = false;
                     };
                 })
-                .catch(err => {
-                    qrContainer.innerHTML = '<span class="text-red-500 text-xs">Gagal. Cek koneksi / jenis surat.</span>';
-                });
+                .catch(err => { qrContainer.innerHTML = '<span class="text-red-500 text-xs">Gagal memuat pratinjau.</span>'; });
             }
 
             let timeout;
             function debounceUpdateQr() { clearTimeout(timeout); timeout = setTimeout(updateQr, 500); }
+            
             if(nomorInput) nomorInput.addEventListener('input', debounceUpdateQr);
             if(jenisInput) jenisInput.addEventListener('change', updateQr);
             if(logoInput) logoInput.addEventListener('change', updateQr);
+            if(colorInput) colorInput.addEventListener('input', debounceUpdateQr);
         });
     </script>
 </x-layouts.admin>

@@ -28,9 +28,16 @@ class SuratPublisher
 
         $disk->makeDirectory('asli');
         $disk->makeDirectory('final');
+        $disk->makeDirectory('logos');
 
         $pathAsli = 'asli/'.Str::random(40).'.pdf';
         $pathFinal = 'final/'.Str::random(40).'.pdf';
+        
+        $logoPath = null;
+        if (isset($data['logo_qr'])) {
+            $logoPath = 'logos/' . Str::random(40) . '.' . $data['logo_qr']->extension();
+            $disk->putFileAs('', $data['logo_qr'], $logoPath);
+        }
 
         try {
             $disk->putFileAs('asli', $berkas, basename($pathAsli));
@@ -45,11 +52,12 @@ class SuratPublisher
                 meta: [
                     'judul' => $data['perihal'],
                     'pembuat' => $data['nama_instansi'],
-                    'logo_qr' => $data['logo_qr'] ?? null,
+                    'qr_color' => $data['qr_color'] ?? '#000000',
+                    'logo_path' => $logoPath ? $disk->path($logoPath) : null,
                 ],
             );
 
-            return DB::transaction(function () use ($admin, $data, $uuid, $kode, $pathAsli, $pathFinal, $disk) {
+            return DB::transaction(function () use ($admin, $data, $uuid, $kode, $pathAsli, $pathFinal, $logoPath, $disk) {
                 $surat = Surat::create([
                     'uuid' => $uuid,
                     'kode_verifikasi' => $kode,
@@ -64,6 +72,8 @@ class SuratPublisher
                     'penandatangan_jabatan' => $data['penandatangan_jabatan'],
                     'qr_posisi' => $data['qr_posisi'],
                     'qr_halaman' => $data['qr_halaman'],
+                    'qr_color' => $data['qr_color'] ?? '#000000',
+                    'qr_logo_path' => $logoPath,
                     'file_asli_path' => $pathAsli,
                     'file_final_path' => $pathFinal,
                     'file_hash_sha256' => hash_file('sha256', $disk->path($pathFinal)),
@@ -121,7 +131,6 @@ class SuratPublisher
             ]);
 
             AuditLog::catat('cabut', $admin, $terkini, ['alasan' => $alasan]);
-
             $surat->refresh();
 
             return true;

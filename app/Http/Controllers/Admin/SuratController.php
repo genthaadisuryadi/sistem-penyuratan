@@ -32,6 +32,7 @@ class SuratController extends Controller
 
         $user = $request->user();
         $status = StatusSurat::tryFrom((string) $request->query('status'));
+        
         $daftar = Surat::query()
             ->with(['pembuat:id,name', 'jenisSurat:id,nama,kode'])
             ->when(! $user->dapatKelolaSemuaSurat(), fn ($q) => $q->where('created_by', $user->id))
@@ -64,6 +65,7 @@ class SuratController extends Controller
         $data = $request->validate([
             'nomor_surat' => ['required', 'string', 'max:100'],
             'jenis_surat_id' => ['required', 'integer', 'exists:jenis_surat,id'],
+            'qr_color' => ['nullable', 'string'],
             'logo_qr' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
         ]);
 
@@ -72,13 +74,14 @@ class SuratController extends Controller
 
         $url = Surat::bangunUrlVerifikasiNomor($data['nomor_surat']);
         $logoBase64 = null;
+        $color = $data['qr_color'] ?? '#000000';
 
         if ($request->hasFile('logo_qr')) {
             $file = $request->file('logo_qr');
             $logoBase64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
         }
 
-        return response($qr->svg($url, 2, $logoBase64))
+        return response($qr->svg($url, 2, $logoBase64, $color))
             ->header('Content-Type', 'image/svg+xml; charset=UTF-8')
             ->header('Cache-Control', 'no-store');
     }
@@ -122,9 +125,16 @@ class SuratController extends Controller
         Gate::authorize('view', $surat);
         $surat->load(['pembuat:id,name', 'pencabut:id,name', 'jenisSurat:id,nama,kode', 'penandatangan:id,name,jabatan']);
 
+        $logoBase64 = null;
+        if ($surat->qr_logo_path && Storage::disk('surat')->exists($surat->qr_logo_path)) {
+            $mime = Storage::disk('surat')->mimeType($surat->qr_logo_path);
+            $content = Storage::disk('surat')->get($surat->qr_logo_path);
+            $logoBase64 = 'data:' . $mime . ';base64,' . base64_encode($content);
+        }
+
         return view('admin.surat.show', [
             'surat' => $surat,
-            'qrSvg' => $qr->svg($surat->urlVerifikasi()),
+            'qrSvg' => $qr->svg($surat->urlVerifikasi(), 2, $logoBase64, $surat->qr_color ?? '#000000'),
             'riwayatScan' => $surat->scanLogs()->latest('scanned_at')->limit(15)->get(),
             'audit' => $surat->auditLogs()->with('user:id,name')->latest('created_at')->limit(10)->get(),
         ]);
@@ -146,7 +156,9 @@ class SuratController extends Controller
         $asli = $request->query('versi') === 'asli';
         $path = $asli ? $surat->file_asli_path : $surat->file_final_path;
         $nama = ($asli ? 'draf-asli-' : '').$surat->namaBerkas();
+        
         abort_unless(Storage::disk('surat')->exists($path), 404, 'Berkas tidak ditemukan di penyimpanan.');
+        
         AuditLog::catat('unduh', $request->user(), $surat, ['versi' => $asli ? 'asli' : 'final']);
 
         return Storage::disk('surat')->download($path, $nama, ['Content-Type' => 'application/pdf']);

@@ -29,7 +29,11 @@ class StoreSuratRequest extends FormRequest
             'penandatangan_id' => ['nullable', 'prohibited'],
             'penandatangan_nama' => $unit ? ['nullable', 'prohibited'] : ['required', 'string', 'max:150'],
             'penandatangan_jabatan' => $unit ? ['nullable', 'prohibited'] : ['required', 'string', 'max:150'],
+            
+            // PERBAIKAN: qr_color kini dimasukkan agar tidak dibuang oleh sistem
+            'qr_color' => ['nullable', 'string', 'max:7'], 
             'logo_qr' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
+            
             'berkas' => [
                 'required', 'file',
                 'mimetypes:application/pdf',
@@ -48,6 +52,7 @@ class StoreSuratRequest extends FormRequest
             'tanggal_surat' => 'tanggal surat',
             'ditujukan_kepada' => 'ditujukan kepada',
             'penandatangan_id' => 'penandatangan',
+            'qr_color' => 'warna QR',
             'logo_qr' => 'logo tengah QR',
             'berkas' => 'berkas PDF',
         ];

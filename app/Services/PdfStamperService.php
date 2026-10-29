@@ -101,16 +101,29 @@ class PdfStamperService
         };
         $y = $posisi->atas() ? $margin : $h - $margin - $boxH;
 
+        // Cetak background putih & garis tepi
         $pdf->SetFillColor(255, 255, 255);
         $pdf->SetDrawColor(203, 213, 225);
         $pdf->SetLineWidth(0.15);
         $pdf->Rect($x, $y, $boxW, $boxH, 'DF');
 
+        // PERBAIKAN: Ambil warna HEX dan atur warna pengisi (FillColor)
+        $hex = ltrim($meta['qr_color'] ?? '#000000', '#');
+        if (strlen($hex) == 6) {
+            $r = hexdec(substr($hex, 0, 2));
+            $g = hexdec(substr($hex, 2, 2));
+            $b = hexdec(substr($hex, 4, 2));
+            $pdf->SetFillColor($r, $g, $b);
+        } else {
+            $pdf->SetFillColor(0, 0, 0);
+        }
+
         $n = count($matrix);
         $modul = $qrSize / $n;
         $overdraw = 0.02; 
-        $rects = [];
 
+        // PERBAIKAN UTAMA: Gambar matriks QR dengan "Rect" secara langsung
+        // untuk mengabaikan fungsi isiPersegi() yang mengunci warna ke hitam
         foreach ($matrix as $baris => $kolom) {
             $c = 0;
             while ($c < $n) {
@@ -122,38 +135,44 @@ class PdfStamperService
                 while ($c < $n && $kolom[$c]) {
                     $c++;
                 }
-                $rects[] = [
+                
+                $pdf->Rect(
                     $x + $quiet + $awal * $modul,
                     $y + $quiet + $baris * $modul,
                     ($c - $awal) * $modul + $overdraw,
                     $modul + $overdraw,
-                ];
+                    'F' // Parameter 'F' mewajibkan PDF menggunakan warna dari SetFillColor
+                );
             }
         }
-        
-        $pdf->isiPersegi($rects);
 
-        // PERBAIKAN: Secara eksplisit membaca tipe file agar FPDF tidak bingung
-        if (isset($meta['logo_qr']) && $meta['logo_qr'] instanceof UploadedFile) {
+        // Eksekusi logo tengah (jika ada)
+        $logoPath = null;
+        $logoExt = null;
+
+        if (!empty($meta['logo_path']) && file_exists($meta['logo_path'])) {
+            $logoPath = $meta['logo_path'];
+            $logoExt = strtoupper(pathinfo($logoPath, PATHINFO_EXTENSION));
+        } elseif (isset($meta['logo_qr']) && $meta['logo_qr'] instanceof UploadedFile) {
             $logoPath = $meta['logo_qr']->getRealPath();
-            
-            // Mengambil ekstensi asli (png, jpg, jpeg) dan mengubahnya menjadi HURUF BESAR
             $logoExt = strtoupper($meta['logo_qr']->extension());
+        }
+
+        if ($logoPath) {
             if ($logoExt === 'JPG') {
-                $logoExt = 'JPEG'; // FPDF mengenali JPG sebagai JPEG
+                $logoExt = 'JPEG';
             }
             
-            $logoSize = $qrSize * 0.28; 
+            $logoSize = $qrSize * 0.15; 
             $logoX = $x + $quiet + ($qrSize - $logoSize) / 2;
             $logoY = $y + $quiet + ($qrSize - $logoSize) / 2;
 
             $pdf->SetFillColor(255, 255, 255);
             $pdf->Rect($logoX, $logoY, $logoSize, $logoSize, 'F');
-            
-            // Menyisipkan parameter $logoExt ke pemanggilan fungsi Image()
             $pdf->Image($logoPath, $logoX, $logoY, $logoSize, $logoSize, $logoExt);
         }
 
+        // Teks footer
         $pdf->SetTextColor(51, 65, 85);
         $pdf->SetFont('Helvetica', '', 5.6);
         $pdf->SetXY($x, $y + $quiet + $qrSize + 0.6);
