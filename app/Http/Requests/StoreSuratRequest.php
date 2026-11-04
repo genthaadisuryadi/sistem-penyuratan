@@ -20,7 +20,8 @@ class StoreSuratRequest extends FormRequest
         $unit = $this->user()?->role === RoleAdmin::Unit;
 
         return [
-            'nama_instansi' => ['required', 'string', 'max:255'],
+            // PERBAIKAN: Baris validasi 'nama_instansi' sudah dihapus sepenuhnya dari sini
+            
             'jenis_surat_id' => ['required', 'integer', Rule::exists('jenis_surat', 'id')->where('is_active', true)],
             'nomor_surat' => ['required', 'string', 'max:100', Rule::unique('surat', 'nomor_surat')],
             'tanggal_surat' => ['required', 'date'],
@@ -29,8 +30,6 @@ class StoreSuratRequest extends FormRequest
             'penandatangan_id' => ['nullable', 'prohibited'],
             'penandatangan_nama' => $unit ? ['nullable', 'prohibited'] : ['required', 'string', 'max:150'],
             'penandatangan_jabatan' => $unit ? ['nullable', 'prohibited'] : ['required', 'string', 'max:150'],
-            
-            // PERBAIKAN: qr_color kini dimasukkan agar tidak dibuang oleh sistem
             'qr_color' => ['nullable', 'string', 'max:7'], 
             'logo_qr' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
             
@@ -46,7 +45,6 @@ class StoreSuratRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'nama_instansi' => 'nama instansi',
             'jenis_surat_id' => 'jenis surat',
             'nomor_surat' => 'nomor surat',
             'tanggal_surat' => 'tanggal surat',

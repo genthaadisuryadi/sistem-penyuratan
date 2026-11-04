@@ -79,4 +79,7 @@ Route::middleware(['auth', 'admin.aktif', 'no-store'])->prefix('admin')->name('a
     Route::get('pengaturan', [PengaturanController::class, 'edit'])->name('pengaturan');
     Route::put('pengaturan/profil', [PengaturanController::class, 'updateProfil'])->name('pengaturan.profil');
     Route::put('pengaturan/sandi', [PengaturanController::class, 'updatePassword'])->name('pengaturan.sandi');
+    
+    // INI DIA RUTE YANG TERTINGGAL SEBELUMNYA
+    Route::put('pengaturan/sistem', [PengaturanController::class, 'updateSistem'])->name('pengaturan.sistem'); 
 });

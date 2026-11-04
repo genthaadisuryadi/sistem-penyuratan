@@ -14,12 +14,6 @@
                 <h2 id="judul-data" class="text-base font-semibold text-slate-900">Informasi surat</h2>
 
                 <div class="mt-5">
-                    <label for="nama_instansi" class="label text-slate-700">Nama Instansi Penerbit</label>
-                    <input id="nama_instansi" name="nama_instansi" type="text" value="{{ old('nama_instansi') }}" required maxlength="255" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" @error('nama_instansi') aria-invalid="true" @enderror>
-                    @error('nama_instansi') <p class="field-error" role="alert">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="mt-5">
                     <label for="jenis_surat_id" class="label text-slate-700">Jenis Surat</label>
                     <select id="jenis_surat_id" name="jenis_surat_id" class="input focus:border-[#e7553c] focus:ring-[#e7553c]/25" required>
                         <option value="">Pilih jenis surat</option>

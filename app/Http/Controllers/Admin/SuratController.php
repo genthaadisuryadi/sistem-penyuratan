@@ -6,7 +6,6 @@ use App\Enums\HalamanQr;
 use App\Enums\PosisiQr;
 use App\Enums\RoleAdmin;
 use App\Enums\StatusSurat;
-use App\Exceptions\PdfTidakDapatDiprosesException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RevokeSuratRequest;
 use App\Http\Requests\StoreSuratRequest;
@@ -92,6 +91,20 @@ class SuratController extends Controller
         $data = $request->safe()->except('berkas');
         $user = $request->user();
 
+        $namaInstansi = '';
+        if (Storage::disk('local')->exists('pengaturan_sistem.json')) {
+            $config = json_decode(Storage::disk('local')->get('pengaturan_sistem.json'), true);
+            if (!empty($config['nama_instansi'])) {
+                $namaInstansi = $config['nama_instansi'];
+            }
+        }
+        
+        if ($namaInstansi === '') {
+            return back()->withInput()->withErrors(['berkas' => 'Nama Instansi penerbit belum diatur. Silakan isi terlebih dahulu di menu Pengaturan Sistem.']);
+        }
+
+        $data['nama_instansi'] = $namaInstansi;
+
         if ($request->hasFile('logo_qr')) {
             $data['logo_qr'] = $request->file('logo_qr');
         }
@@ -110,11 +123,9 @@ class SuratController extends Controller
 
         try {
             $surat = $publisher->terbitkan($user, $data, $request->file('berkas'));
-        } catch (PdfTidakDapatDiprosesException $e) {
-            return back()->withInput()->withErrors(['berkas' => $e->getMessage()]);
         } catch (Throwable $e) {
             report($e);
-            return back()->withInput()->withErrors(['berkas' => 'Terjadi kesalahan saat memproses PDF. Data tidak disimpan, silakan coba lagi.']);
+            return back()->withInput()->withErrors(['berkas' => 'Terjadi kesalahan saat menyimpan PDF. Data tidak disimpan, silakan coba lagi.']);
         }
 
         return redirect()->route('admin.surat.show', $surat)->with('status', 'Surat berhasil disimpan sebagai draf.');

@@ -172,15 +172,6 @@ class PdfStamperService
             $pdf->Image($logoPath, $logoX, $logoY, $logoSize, $logoSize, $logoExt);
         }
 
-        // Teks footer
-        $pdf->SetTextColor(51, 65, 85);
-        $pdf->SetFont('Helvetica', '', 5.6);
-        $pdf->SetXY($x, $y + $quiet + $qrSize + 0.6);
-        $pdf->Cell($boxW, 2.6, 'Pindai untuk verifikasi keaslian', 0, 2, 'C');
-        
-        $pdf->SetFont('Helvetica', 'B', 6.4);
-        $pdf->SetX($x);
-        $pdf->Cell($boxW, 3.0, 'Sistem Verifikasi Resmi', 0, 0, 'C');
     }
 
     private function latin1(string $teks): string

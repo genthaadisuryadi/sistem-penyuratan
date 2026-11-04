@@ -18,7 +18,8 @@ class SuratPublisher
 {
     private const ALFABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-    public function __construct(private readonly PdfStamperService $stamper) {}
+    // Constructor dikosongkan karena kita tidak lagi menggunakan PdfStamperService
+    public function __construct() {}
 
     public function terbitkan(User $admin, array $data, UploadedFile $berkas): Surat
     {
@@ -40,22 +41,11 @@ class SuratPublisher
         }
 
         try {
+            // 1. Simpan file PDF yang di-upload (yang di dalamnya SUDAH ada QR hasil tempelan manual Anda)
             $disk->putFileAs('asli', $berkas, basename($pathAsli));
 
-            $this->stamper->stempel(
-                sumber: $disk->path($pathAsli),
-                tujuan: $disk->path($pathFinal),
-                url: Surat::bangunUrlVerifikasiNomor($data['nomor_surat']),
-                kode: $kode,
-                posisi: PosisiQr::from($data['qr_posisi']),
-                halaman: HalamanQr::from($data['qr_halaman']),
-                meta: [
-                    'judul' => $data['perihal'],
-                    'pembuat' => $data['nama_instansi'],
-                    'qr_color' => $data['qr_color'] ?? '#000000',
-                    'logo_path' => $logoPath ? $disk->path($logoPath) : null,
-                ],
-            );
+            // 2. Karena tidak perlu distempel sistem lagi, langsung salin file asli menjadi file final
+            $disk->copy($pathAsli, $pathFinal);
 
             return DB::transaction(function () use ($admin, $data, $uuid, $kode, $pathAsli, $pathFinal, $logoPath, $disk) {
                 $surat = Surat::create([

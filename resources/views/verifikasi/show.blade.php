@@ -108,13 +108,48 @@
             </section>
         @endif
 
-        {{-- DETAIL HASH BERKAS --}}
-        <details class="rounded-3xl border border-slate-200 bg-white p-5 text-sm shadow-sm sm:px-6">
-            <summary class="cursor-pointer font-semibold text-slate-700 hover:text-slate-900">Lihat sidik jari berkas (SHA-256)</summary>
-            <div class="mt-4 rounded-xl bg-slate-50 p-4">
-                <p class="break-all font-mono text-xs font-medium leading-relaxed text-slate-600">{{ $surat->file_hash_sha256 }}</p>
-                <p class="mt-3 text-xs text-slate-500">Hash dari PDF yang tersimpan di sistem.</p>
-                <button type="button" data-copy="{{ $surat->file_hash_sha256 }}" class="btn-secondary mt-3 !py-2 !text-xs">Salin hash</button>
+        {{-- CEK KEASLIAN BERKAS (HASHING) --}}
+        <details class="rounded-3xl border border-slate-200 bg-white p-5 text-sm shadow-sm sm:px-6" {{ $sah ? 'open' : '' }}>
+            <summary class="cursor-pointer font-semibold text-slate-800 hover:text-slate-900">Cek Keaslian & Sidik Jari Berkas (SHA-256)</summary>
+            
+            <p class="mb-4 mt-4 text-[13px] leading-relaxed text-slate-500">Unggah dokumen PDF fisik Anda ke sini. Sistem akan mengecek sidik jari (Hash) dokumen secara instan untuk memastikan tidak ada satu kata pun yang dimanipulasi.</p>
+            
+            <!-- AREA UPLOAD (Ditampilkan saat kosong) -->
+            <div id="area_upload">
+                <label for="cek_file_publik" class="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center transition-colors hover:border-blue-500 hover:bg-blue-50">
+                    <input id="cek_file_publik" type="file" accept="application/pdf,.pdf" class="sr-only">
+                    <x-icon name="unggah" class="mb-2 size-7 text-slate-400" />
+                    <p class="text-sm font-semibold text-slate-700">Pilih berkas PDF Anda</p>
+                    <p class="mt-1 text-[11px] text-slate-500">Aman 100%. File diperiksa di perangkat Anda dan tidak dikirim ke server.</p>
+                </label>
+            </div>
+
+            <!-- AREA INFO FILE (Ditampilkan setelah upload, menggantikan kotak upload) -->
+            <div id="area_file_terpilih" class="hidden mt-2 flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div class="min-w-0">
+                        <p id="nama_file_terpilih" class="truncate text-sm font-semibold text-slate-800">nama-file.pdf</p>
+                        <p id="ukuran_file_terpilih" class="text-[11px] text-slate-500">0 KB</p>
+                    </div>
+                </div>
+                <button type="button" id="btn_ganti_file" class="ml-4 shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
+                    Ganti
+                </button>
+            </div>
+
+            <div id="hasil_cek_publik" class="mt-4 hidden rounded-xl border p-4 text-center transition-all"></div>
+
+            <div class="mt-6 border-t border-slate-100 pt-5">
+                <p class="text-xs font-semibold text-slate-700">Hash Asli (Tersimpan di Server):</p>
+                <div class="mt-3 rounded-xl bg-slate-50 p-4">
+                    <p id="hash_sistem_publik" class="break-all font-mono text-[11px] font-medium leading-relaxed text-slate-600">{{ $surat->file_hash_sha256 }}</p>
+                    <button type="button" data-copy="{{ $surat->file_hash_sha256 }}" class="btn-secondary mt-3 !py-1.5 !text-[11px] font-semibold uppercase tracking-wide">Salin Hash</button>
+                </div>
             </div>
         </details>
         
@@ -124,4 +159,96 @@
             @include('verifikasi._pencarian')
         </section>
     </main>
+
+    <!-- ================= SCRIPT VALIDASI CLIENT-SIDE ================= -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('cek_file_publik');
+            const areaUpload = document.getElementById('area_upload');
+            const areaFileTerpilih = document.getElementById('area_file_terpilih');
+            const namaFileTerpilih = document.getElementById('nama_file_terpilih');
+            const ukuranFileTerpilih = document.getElementById('ukuran_file_terpilih');
+            const btnGantiFile = document.getElementById('btn_ganti_file');
+            
+            const hasilDiv = document.getElementById('hasil_cek_publik');
+            const hashSistem = document.getElementById('hash_sistem_publik').innerText.trim().toLowerCase();
+
+            // Fungsi untuk memformat ukuran file
+            function formatBytes(bytes, decimals = 2) {
+                if (!+bytes) return '0 Bytes';
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+            }
+
+            // Aksi saat tombol "Ganti" diklik
+            btnGantiFile.addEventListener('click', function() {
+                fileInput.value = '';
+                areaUpload.classList.remove('hidden');
+                areaFileTerpilih.classList.add('hidden');
+                hasilDiv.classList.add('hidden');
+            });
+
+            if (fileInput) {
+                fileInput.addEventListener('change', async function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    // Sembunyikan area upload & tampilkan info file
+                    areaUpload.classList.add('hidden');
+                    areaFileTerpilih.classList.remove('hidden');
+                    namaFileTerpilih.textContent = file.name;
+                    ukuranFileTerpilih.textContent = formatBytes(file.size);
+
+                    // Tampilkan status loading
+                    hasilDiv.classList.remove('hidden');
+                    hasilDiv.className = 'mt-4 rounded-xl border border-slate-200 bg-slate-50 p-5 text-center shadow-inner';
+                    hasilDiv.innerHTML = '<p class="text-sm font-semibold text-slate-500 animate-pulse">Memeriksa keaslian dokumen...</p>';
+
+                    try {
+                        // Proses baca file dan konversi ke SHA-256
+                        const arrayBuffer = await file.arrayBuffer();
+                        const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+                        const hashArray = Array.from(new Uint8Array(hashBuffer));
+                        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toLowerCase();
+
+                        // Bandingkan Hash Upload vs Hash Database
+                        if (hashHex === hashSistem) {
+                            // PERBAIKAN: Ubah warna menjadi BIRU
+                            hasilDiv.className = 'mt-4 rounded-xl border border-blue-200 bg-blue-50 p-5 text-center text-blue-900 shadow-sm ring-1 ring-blue-500/20';
+                            hasilDiv.innerHTML = `
+                                <div class="mb-1 flex items-center justify-center gap-2">
+                                    <svg class="size-7 text-blue-600 drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span class="text-lg font-bold">Dokumen Valid & Asli</span>
+                                </div>
+                                <p class="mt-2 text-[13px] font-medium leading-relaxed text-blue-700/90">Sidik jari dokumen ini cocok 100% dengan database kami. Terjamin tidak ada manipulasi.</p>
+                            `;
+                        } else {
+                            hasilDiv.className = 'mt-4 rounded-xl border border-red-200 bg-red-50 p-5 text-center text-red-900 shadow-sm ring-1 ring-red-500/20';
+                            hasilDiv.innerHTML = `
+                                <div class="mb-1 flex items-center justify-center gap-2">
+                                    <svg class="size-7 text-red-600 drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span class="text-lg font-bold">Dokumen Tidak Valid</span>
+                                </div>
+                                <p class="mt-2 text-[13px] font-medium leading-relaxed text-red-700/90">Peringatan: Dokumen ini berbeda dari aslinya dan terindikasi telah dimodifikasi atau dipalsukan.</p>
+                                <div class="mt-4 rounded-lg border border-red-200 bg-white/70 p-3 text-left">
+                                    <p class="text-[11px] font-bold uppercase tracking-wider text-red-800">Hash Terdeteksi (Berbeda):</p>
+                                    <p class="mt-1 break-all font-mono text-[11px] text-red-700/80">${hashHex}</p>
+                                </div>
+                            `;
+                        }
+                    } catch (error) {
+                        hasilDiv.className = 'mt-4 rounded-xl border border-amber-200 bg-amber-50 p-5 text-center text-amber-900';
+                        hasilDiv.innerHTML = '<p class="text-sm font-bold">Gagal memproses berkas PDF.</p><p class="mt-1 text-xs text-amber-700/80">Pastikan file yang diunggah tidak rusak.</p>';
+                    }
+                });
+            }
+        });
+    </script>
 </x-layouts.publik>
