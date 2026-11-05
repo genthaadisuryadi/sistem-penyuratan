@@ -25,11 +25,13 @@ class SecurityHeaders
         if (! app()->environment('local')) {
             $response->headers->set('Content-Security-Policy', implode('; ', [
                 "default-src 'self'",
-                "script-src 'self'",
+                // PERBAIKAN: Tambahkan 'unsafe-inline' dan URL Cloudflare
+                "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
                 "style-src 'self' 'unsafe-inline'",
                 "img-src 'self' data:",
                 "font-src 'self'",
-                "connect-src 'self'",
+                // PERBAIKAN: Tambahkan URL Cloudflare agar beacon analitik bisa mengirim data balik
+                "connect-src 'self' https://cloudflareinsights.com",
                 "object-src 'none'",
                 "base-uri 'self'",
                 "form-action 'self'",
