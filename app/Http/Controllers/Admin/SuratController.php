@@ -80,8 +80,9 @@ class SuratController extends Controller
             $logoBase64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
         }
 
-        return response($qr->svg($url, 2, $logoBase64, $color))
-            ->header('Content-Type', 'image/svg+xml; charset=UTF-8')
+        // PERUBAHAN: Ekspor menjadi PNG dan ubah Content-Type ke image/png
+        return response($qr->png($url, 2, $logoBase64, $color))
+            ->header('Content-Type', 'image/png')
             ->header('Cache-Control', 'no-store');
     }
 

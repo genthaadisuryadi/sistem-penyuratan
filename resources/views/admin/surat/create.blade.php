@@ -98,7 +98,7 @@
                     
                     <button type="button" data-download-qr disabled class="btn-primary mt-4 w-full transition-all disabled:cursor-not-allowed disabled:opacity-50">
                         <x-icon name="unduh" class="size-4"/>
-                        Download QR Code
+                        Download QR Code (PNG)
                     </button>
                     <p class="mt-2 text-center font-medium text-[11px] text-slate-500">Wajib diunduh untuk melanjutkan.</p>
                 </div>
@@ -195,7 +195,8 @@
                         e.preventDefault();
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = `QR_${nomorInput.value.replace(/[\/\\]/g, '-')}.svg`;
+                        // PERUBAHAN: Ekstensi unduhan diubah menjadi .png
+                        a.download = `QR_${nomorInput.value.replace(/[\/\\]/g, '-')}.png`;
                         a.click();
                         if(btnNext) btnNext.disabled = false;
                     };
