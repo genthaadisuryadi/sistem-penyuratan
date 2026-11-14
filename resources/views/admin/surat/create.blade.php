@@ -8,6 +8,18 @@
     <form method="POST" action="{{ route('admin.surat.store') }}" enctype="multipart/form-data" novalidate>
         @csrf
 
+        <!-- ================= BLOK PENANGKAP ERROR (BARU) ================= -->
+        @if ($errors->any())
+            <div class="mb-5 rounded-xl border border-red-200 bg-red-50 p-4">
+                <p class="font-bold text-red-800">Sistem menolak surat ini karena:</p>
+                <ul class="mt-2 list-inside list-disc text-sm text-red-700">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <!-- ================= STEP 1: FORMULIR & QR CODE ================= -->
         <div id="step-1-container" class="grid items-start gap-6 lg:grid-cols-5">
             <section class="panel border-slate-200 p-6 lg:col-span-3" aria-labelledby="judul-data">
@@ -50,7 +62,6 @@
                 </div>
 
                 <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <!-- PERBAIKAN: Mengganti label menjadi tag <p> agar inspect tidak error -->
                     <p class="label text-slate-700 mb-2 font-medium">Ditandatangani Oleh</p>
                     
                     @if ($isUnit)
@@ -177,7 +188,6 @@
 
             if(btnNext && step1 && step2) {
                 btnNext.addEventListener('click', function() { 
-                    // PERBAIKAN: Validasi input Step 1 sebelum pindah Step 2
                     let isValid = true;
                     const inputs = step1.querySelectorAll('input[required], select[required]');
                     
@@ -202,7 +212,12 @@
                     window.scrollTo({ top: 0, behavior: 'smooth' }); 
                 });
             }
-            @if($errors->has('berkas')) if(step1 && step2) { step1.classList.add('hidden'); step2.classList.remove('hidden'); } @endif
+            @if($errors->has('berkas') || $errors->any()) 
+                if(step1 && step2) { 
+                    step1.classList.add('hidden'); 
+                    step2.classList.remove('hidden'); 
+                } 
+            @endif
 
             const nomorInput = document.getElementById('nomor_surat');
             const jenisInput = document.getElementById('jenis_surat_id');
