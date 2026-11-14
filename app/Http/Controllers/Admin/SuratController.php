@@ -114,10 +114,16 @@ class SuratController extends Controller
         $data['qr_halaman'] = HalamanQr::Terakhir->value;
         $data['status'] = StatusSurat::Draf->value;
 
+        // PERUBAHAN: Tangkap pilihan jabatan dari request (dropdown) jika Unit
         if ($user->role === RoleAdmin::Unit) {
             $data['penandatangan_id'] = $user->id;
             $data['penandatangan_nama'] = $user->name;
-            $data['penandatangan_jabatan'] = $user->jabatan ?: $user->role->label();
+            
+            // Ambil jabatan pertama sebagai jaga-jaga jika input kosong
+            $jabatanUtama = explode(',', $user->jabatan ?? '')[0] ?? '';
+            $jabatanUtama = trim($jabatanUtama) ?: $user->role->label();
+            
+            $data['penandatangan_jabatan'] = $request->input('penandatangan_jabatan') ?: $jabatanUtama;
         } else {
             $data['penandatangan_id'] = null;
         }
