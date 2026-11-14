@@ -50,18 +50,18 @@
                 </div>
 
                 <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <label for="penandatangan_id" class="label text-slate-700">Ditandatangani Oleh</label>
+                    <!-- PERBAIKAN: Mengganti label menjadi tag <p> agar inspect tidak error -->
+                    <p class="label text-slate-700 mb-2 font-medium">Ditandatangani Oleh</p>
+                    
                     @if ($isUnit)
                         <div class="rounded-lg border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
                             <p class="font-semibold text-slate-900">{{ auth()->user()->name }}</p>
                             
                             @php
-                                // Pecah string jabatan berdasarkan tanda koma
                                 $daftarJabatan = array_filter(array_map('trim', explode(',', auth()->user()->jabatan ?? '')));
                             @endphp
 
                             @if (count($daftarJabatan) > 1)
-                                <!-- DROPDOWN: Muncul jika admin mengisi lebih dari 1 jabatan -->
                                 <select name="penandatangan_jabatan" class="input mt-2 w-full text-sm focus:border-[#e7553c] focus:ring-[#e7553c]/25" required>
                                     <option value="">-- Pilih Posisi Surat Ini --</option>
                                     @foreach ($daftarJabatan as $jab)
@@ -69,7 +69,6 @@
                                     @endforeach
                                 </select>
                             @else
-                                <!-- TEKS STATIS: Muncul jika admin hanya mengisi 1 jabatan -->
                                 @php $jabatanTunggal = count($daftarJabatan) === 1 ? $daftarJabatan[0] : auth()->user()->role->label(); @endphp
                                 <p class="mt-0.5 text-sm text-slate-500">{{ $jabatanTunggal }}</p>
                                 <input type="hidden" name="penandatangan_jabatan" value="{{ $jabatanTunggal }}">
@@ -177,8 +176,31 @@
             const step2 = document.getElementById('step-2-container');
 
             if(btnNext && step1 && step2) {
-                btnNext.addEventListener('click', function() { step1.classList.add('hidden'); step2.classList.remove('hidden'); window.scrollTo({ top: 0, behavior: 'smooth' }); });
-                btnPrev.addEventListener('click', function() { step2.classList.add('hidden'); step1.classList.remove('hidden'); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+                btnNext.addEventListener('click', function() { 
+                    // PERBAIKAN: Validasi input Step 1 sebelum pindah Step 2
+                    let isValid = true;
+                    const inputs = step1.querySelectorAll('input[required], select[required]');
+                    
+                    for (let i = 0; i < inputs.length; i++) {
+                        if (!inputs[i].checkValidity()) {
+                            inputs[i].reportValidity(); 
+                            isValid = false;
+                            break;
+                        }
+                    }
+
+                    if (isValid) {
+                        step1.classList.add('hidden'); 
+                        step2.classList.remove('hidden'); 
+                        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                    }
+                });
+
+                btnPrev.addEventListener('click', function() { 
+                    step2.classList.add('hidden'); 
+                    step1.classList.remove('hidden'); 
+                    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                });
             }
             @if($errors->has('berkas')) if(step1 && step2) { step1.classList.add('hidden'); step2.classList.remove('hidden'); } @endif
 
@@ -214,7 +236,6 @@
                         e.preventDefault();
                         const a = document.createElement('a');
                         a.href = url;
-                        // PERUBAHAN: Ekstensi unduhan diubah menjadi .png
                         a.download = `QR_${nomorInput.value.replace(/[\/\\]/g, '-')}.png`;
                         a.click();
                         if(btnNext) btnNext.disabled = false;

@@ -80,13 +80,12 @@ class SuratController extends Controller
             $logoBase64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
         }
 
-        // PERUBAHAN: Ekspor menjadi PNG dan ubah Content-Type ke image/png
         return response($qr->png($url, 2, $logoBase64, $color))
             ->header('Content-Type', 'image/png')
             ->header('Cache-Control', 'no-store');
     }
 
-    public function store(StoreSuratRequest $request, SuratPublisher $publisher): RedirectResponse
+    public function store(StoreSuratRequest $request, SuratPublisher $publisher)
     {
         set_time_limit(180);
         $data = $request->safe()->except('berkas');
@@ -114,12 +113,10 @@ class SuratController extends Controller
         $data['qr_halaman'] = HalamanQr::Terakhir->value;
         $data['status'] = StatusSurat::Draf->value;
 
-        // PERUBAHAN: Tangkap pilihan jabatan dari request (dropdown) jika Unit
         if ($user->role === RoleAdmin::Unit) {
             $data['penandatangan_id'] = $user->id;
             $data['penandatangan_nama'] = $user->name;
             
-            // Ambil jabatan pertama sebagai jaga-jaga jika input kosong
             $jabatanUtama = explode(',', $user->jabatan ?? '')[0] ?? '';
             $jabatanUtama = trim($jabatanUtama) ?: $user->role->label();
             
@@ -131,8 +128,12 @@ class SuratController extends Controller
         try {
             $surat = $publisher->terbitkan($user, $data, $request->file('berkas'));
         } catch (Throwable $e) {
-            report($e);
-            return back()->withInput()->withErrors(['berkas' => 'Terjadi kesalahan saat menyimpan PDF. Data tidak disimpan, silakan coba lagi.']);
+            // PERBAIKAN: Memaksa error asli tampil di layar agar kita tahu persis penyakitnya
+            dd(
+                'PESAN ERROR: ' . $e->getMessage(),
+                'DI FILE: ' . $e->getFile(),
+                'BARIS KE: ' . $e->getLine()
+            );
         }
 
         return redirect()->route('admin.surat.show', $surat)->with('status', 'Surat berhasil disimpan sebagai draf.');
