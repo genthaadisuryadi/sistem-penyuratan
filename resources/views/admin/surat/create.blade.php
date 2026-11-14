@@ -54,7 +54,26 @@
                     @if ($isUnit)
                         <div class="rounded-lg border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
                             <p class="font-semibold text-slate-900">{{ auth()->user()->name }}</p>
-                            <p class="mt-0.5 text-sm text-slate-500">{{ auth()->user()->jabatan ?: auth()->user()->role->label() }}</p>
+                            
+                            @php
+                                // Pecah string jabatan berdasarkan tanda koma
+                                $daftarJabatan = array_filter(array_map('trim', explode(',', auth()->user()->jabatan ?? '')));
+                            @endphp
+
+                            @if (count($daftarJabatan) > 1)
+                                <!-- DROPDOWN: Muncul jika admin mengisi lebih dari 1 jabatan -->
+                                <select name="penandatangan_jabatan" class="input mt-2 w-full text-sm focus:border-[#e7553c] focus:ring-[#e7553c]/25" required>
+                                    <option value="">-- Pilih Posisi Surat Ini --</option>
+                                    @foreach ($daftarJabatan as $jab)
+                                        <option value="{{ $jab }}" @selected(old('penandatangan_jabatan') == $jab)>{{ $jab }}</option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <!-- TEKS STATIS: Muncul jika admin hanya mengisi 1 jabatan -->
+                                @php $jabatanTunggal = count($daftarJabatan) === 1 ? $daftarJabatan[0] : auth()->user()->role->label(); @endphp
+                                <p class="mt-0.5 text-sm text-slate-500">{{ $jabatanTunggal }}</p>
+                                <input type="hidden" name="penandatangan_jabatan" value="{{ $jabatanTunggal }}">
+                            @endif
                         </div>
                     @else
                         <div class="grid gap-4 sm:grid-cols-2">
